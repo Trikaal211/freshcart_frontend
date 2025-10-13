@@ -1,0 +1,172 @@
+.container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+    box-sizing: border-box;
+
+}
+.haha{
+    flex: 3;
+}
+.baba{
+ flex: 2;
+      
+
+}
+
+.card1,
+.card2 {
+  display: flex;
+  width: 100%;
+  height: 300px;  
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f1f1;
+  border-radius: 12px;
+  flex: 1;
+}
+
+.card-image{
+    max-width: 340px;
+    width: 100%;
+    height: 100%;
+}
+.card-image img {
+    object-position:center;
+    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.card-text {
+  padding: 24px;
+  
+}
+
+.store-buttons {
+  display: flex;
+    margin-top: 10px;
+  gap: 10px;
+}
+.sto{
+   margin-right:5px ;
+   height: 20px;
+   width: 20px;
+}
+
+.store-buttons button {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  
+border: none;
+  padding: 8px 14px;
+  border-radius: 25px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.card2 a{
+    text-decoration: none;
+    color: black;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: black;
+    display: flex;
+    align-items: center;
+
+}
+.store-buttons{
+    width: fit-content;
+}
+.arrow{
+    margin-left: 8px;
+}
+.card1-text h2{
+    font-size: 1.5rem;
+}
+.card2-text h2{
+    font-size: 1.5rem;
+}
+
+@media(max-width:986px){
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+.haha{
+    width: 100%;
+}
+.baba{
+    width: 100%;
+      
+
+}
+}
+@media(max-width:748px){
+    .store-buttons{
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+@media(max-width:500px){
+   .card1, .card2 {
+      flex-direction: column; 
+      height: auto;             
+      align-items: flex-start;  
+   }
+
+   .card1 {
+      flex-direction: column-reverse;
+   }
+
+   .card-text {
+      padding: 16px;
+      width: 100%;  
+   }
+
+   .card-image {
+      width: 100%;
+      max-width: 100%;
+      height: auto;  
+   }
+
+   .card-image img {
+      width: 100%;
+      height: auto;
+      object-fit: contain; 
+   }
+}
+@media(max-width:500px){
+  .card-text {
+  text-align: center;
+  
+  
+}
+.store-buttons{
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: center;
+}
+}
+@media(max-width:352px){
+  .card-text {
+  text-align: center;
+  
+  
+}
+.store-buttons button{
+ padding: 5px;
+}
+.sto{
+  margin: 0;
+  height: 18px;
+  padding-right: 5px;
+  width: 18px;
+}
+}

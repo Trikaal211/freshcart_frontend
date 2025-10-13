@@ -1,0 +1,136 @@
+.product-card {
+  flex: 1 1 calc(25% - 20px);
+  max-width: calc(25% - 20px);
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.product-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  background: #f8f8f8;
+}
+
+.product-info {
+  padding: 12px;
+  flex-grow: 1;
+}
+
+.product-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 6px 0;
+  color: #222;
+}
+
+.product-info .price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2a9d8f;
+}
+
+.product-info .old-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 0.85rem;
+  margin-left: 8px;
+}
+
+.weigh {
+  font-size: 0.85rem;
+  color: #555;
+  padding: 0 12px 12px;
+}
+
+/* Discount Badge */
+.discount {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #e63946;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Wishlist Icon */
+.wish {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.wishlist {
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.wishlist:hover {
+  color: #e63946;
+}
+
+/* Add Button */
+.add {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.add-btn {
+  background: #2a9d8f;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #21867a;
+}
+
+/* ✅ Responsive Breakpoints */
+@media (max-width: 1200px) {
+  .product-card {
+    flex: 1 1 calc(33.333% - 20px);
+    max-width: calc(33.333% - 20px);
+  }
+}
+
+@media (max-width: 900px) {
+  .product-card {
+    flex: 1 1 calc(50% - 20px);
+    max-width: calc(50% - 20px);
+  }
+}
+
+@media (max-width: 600px) {
+  .product-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}

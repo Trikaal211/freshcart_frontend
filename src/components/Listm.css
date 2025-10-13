@@ -1,0 +1,61 @@
+
+.cover-list {
+  display: flex;
+  align-items: center;
+  gap: 7px;            
+  padding: 8px 0px;
+  text-decoration: none;
+  color: black;
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: fit-content;    
+  height: auto;   
+  
+}
+
+.photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;          
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f5f7fa;
+  padding-right: 2px;
+}
+
+.list-icon {
+  width: 31px;
+  height: 31px;
+
+}
+.list-icons{
+    font-size: 22px;
+    color: rgb(255, 96, 123);
+}
+
+.week {
+  font-size: 0.87rem;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  align-items: center;
+  margin-left: 4px;
+  white-space: nowrap; 
+}
+@media(max-width:351px){
+  .week{
+    display: none;
+
+  }
+}
+@media(max-width:332px){
+ .photo {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+
+ }
+}

@@ -1,0 +1,256 @@
+.signup{
+  display: flex;
+  align-items: stretch;   /* 🔑 ab dono div top se start honge */
+  justify-content: center;
+  min-height: 100vh;
+    padding: 0 40px;
+  background-color: #fff;
+}
+
+.left-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0;
+  margin-right: 48px;
+}
+
+.right-image { 
+  flex: 2;
+ width: 100%;
+ height: auto;
+ padding: 24px 0px;
+  display: flex; 
+  justify-content: center;
+align-items: flex-start;
+}
+
+.right-image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: #e0f0ff;
+  object-fit: cover; 
+
+}
+.top-left {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-top:10px;
+  padding-bottom: 24px;
+}
+
+.top-left-icon {
+  width: 36px;
+  height: 36px;
+  background-color: rgb(249, 45, 79);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-right:8px;
+}
+.top-left-icon-itself {
+  transform: rotate(-30deg);
+}
+h3 {
+  font-size: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  padding: 0;
+  margin: 0;
+}
+
+.welcome {
+  margin-bottom: 16px;
+  margin-top: auto;
+}
+.welcome h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.account {
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+.account a {
+  color: #f4667d;
+  margin-left: 6px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.inp {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+.inp:focus {
+  border-color: #f4667d;
+  outline: none;
+}
+
+.remem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 24px 0px;
+}
+
+.sign-in {
+  width: 100%;
+  height: 48px;
+  background-color: #f4667d;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 48px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.sign-in:hover {
+  background-color: #e0556e;
+}
+
+.break {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+.break::before,
+.break::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #d1d5db;
+}
+.break:not(:empty)::before {
+  margin-right: 0.75em;
+}
+.break:not(:empty)::after {
+  margin-left: 0.75em;
+}
+
+.social-icon-user {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+}
+
+.special-icons {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.special-icons:hover {
+  background-color: #f9fafb;
+}
+.footer-user {
+  margin-top: auto; 
+    background-color: #fff; 
+  
+  font-size: 0.85rem;
+  color: #6b7280;
+
+}
+
+.footer-user a {
+  display: block;
+  margin-bottom: 24px;
+ color: black;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer-user a:hover {
+  text-decoration: underline;
+}
+
+.footer-user p {
+  color: #9ca3af; 
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 0;
+
+}
+.checky{
+  width: 12px;
+  margin-top: 1px;
+  
+}
+ .checky-check{
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+ }
+
+@media(max-width:994px){
+  .signup{
+    display: flex;
+    flex-direction: column;
+
+  }
+  .left-detail {
+  margin: 0px;
+}
+}
+@media(max-width:520px){
+  .social-icon-user{
+    display: flex;
+    flex-direction: column;
+  }
+  .signup{
+    padding: 0 16px;
+  }
+}
+@media(max-width:365px){
+  .remem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 24px 0px;
+}
+.checky{
+  width: 11px;
+  margin-top: 1px;
+  
+}
+}
+@media(max-width:948px){
+.left-detail{
+ margin: 0 auto;
+}
+}

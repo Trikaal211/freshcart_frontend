@@ -1,0 +1,111 @@
+/* ProductUpload.css */
+
+.product-upload-container {
+  max-width: 800px;
+  margin: 30px auto;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 30px 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.form-title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1e3a8a;
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.3);
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.lifestyle-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.checkbox-label {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.checkbox-label:hover {
+  background: #e0f2fe;
+}
+
+.section-title {
+  font-weight: 500;
+  color: #1e293b;
+  margin-top: 10px;
+}
+
+.shipping-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submit-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: #1d4ed8;
+}
+
+@media (max-width: 600px) {
+  .product-upload-container {
+    padding: 20px;
+  }
+  .form-title {
+    font-size: 22px;
+  }
+}
