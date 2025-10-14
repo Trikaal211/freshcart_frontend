@@ -18,6 +18,25 @@
   text-decoration: none; 
   color: inherit; 
 }
+.view-all-btn {
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 7px 7px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.popular-product{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.view-all-btn:hover {
+  background-color: #028d1c;
+}
+
 .category-listo {
   width: 50%;
 }

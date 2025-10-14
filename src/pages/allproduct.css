@@ -1,0 +1,21 @@
+.all-cover{
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.back-to{
+    background-color: green;
+    max-width: 150px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+}
+.top-popular{
+    display: flex;
+    flex-direction: column;
+    max-width: 1150px;
+    width: 100%;
+    margin: auto ;
+}

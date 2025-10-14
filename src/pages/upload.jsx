@@ -107,7 +107,7 @@ function ProductUpload() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("✅ Product uploaded successfully!");
+      alert(" Product uploaded successfully!");
       console.log("Response:", res.data);
       setForm(initialForm);
       setFiles([]);

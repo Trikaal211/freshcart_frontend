@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
-import './navbar.css'
+import { Link, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
+import './navbar.css';
 
 import { IoGridOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -10,7 +12,7 @@ import { BsBrightnessHigh } from "react-icons/bs";
 import { FaRegUser } from "react-icons/fa";
 import { CiLocationOn } from "react-icons/ci";
 import { CiShoppingCart } from "react-icons/ci";
-
+                    
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setOpenCart] = useState(false);
@@ -20,7 +22,7 @@ const Navbar = () => {
   const [showForm, setShowForm] = useState(false); 
   const [activeTab, setActiveTab] = useState("delivery"); 
   const [show, Setshow] = useState({
-    home: false,
+    home: false,         
     shop: false,
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,14 +40,14 @@ const Navbar = () => {
     }));
   };
 
-  // Check if user is logged in
+  // Check if user is logged in  
   const isLoggedIn = !!localStorage.getItem("accessToken");
 
   // NEW: Logout function
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     setUserDropdown(false);
-    navigate("/login");
+    navigate("/user");
     // Optional: reload to reset all states
     window.location.reload();
   };
@@ -189,6 +191,19 @@ const Navbar = () => {
     return () => clearTimeout(debounce);
   }, [searchTerm]);
 
+function isTokenValid(token) {
+  if (!token) return false;
+  try {
+    const decoded = jwtDecode(token); // ✅ correct function name
+    console.log("Decoded token:", decoded);
+    const currentTime = Date.now() / 1000; // seconds
+    return decoded.exp > currentTime; // compare expiry properly
+  } catch (err) {
+    console.error("Token decode failed:", err);
+    return false; // invalid token
+  }
+}
+
 
   return (
     <div className={`main ${isFixed ? "fixed" : ""}`}>
@@ -202,7 +217,7 @@ const Navbar = () => {
           </button>
 
         <div className="nav-brand">
-          <Link className="cart" to="/home">Cartzilla</Link>
+          <Link className="cart" to="/">Cartzilla</Link>
         </div>
 
           <div className="category-btn">
@@ -442,12 +457,21 @@ const Navbar = () => {
             <div className="right-div user user-dropdown-container">
               {isLoggedIn ? (
                 <>
-                  <div 
-                    className="user-icon-wrapper"
-                    onClick={() => setUserDropdown(!userDropdown)}
-                  >
-                    <FaRegUser size={18} />
-                  </div>
+                 <div 
+  className="user-icon-wrapper"
+  onClick={() => {
+    const token = localStorage.getItem("accessToken");
+    if (isTokenValid(token)) {
+      setUserDropdown(!userDropdown);
+    } else {
+      alert("Session expired. Please login again.");
+      localStorage.removeItem("accessToken");
+      navigate("/user");
+    }
+  }}
+>
+  <FaRegUser size={18} />
+</div>
                   
                   {/* USER DROPDOWN MENU */}
                   {userDropdown && (

@@ -10,7 +10,11 @@
     overflow: scroll;
     scrollbar-width: none;
 }
-
+.products-grid{
+    display: flex;
+    justify-content: center;
+  
+}
 .list-cover {
     width: 100%;          
     max-width: 1328px;  

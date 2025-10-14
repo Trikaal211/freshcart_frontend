@@ -52,6 +52,17 @@
   font-size: 0.85rem;
   margin-left: 8px;
 }
+.share {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+.share-icon {
+  font-size: 1.5rem;
+  color: #555;
+}
 
 .weigh {
   font-size: 0.85rem;

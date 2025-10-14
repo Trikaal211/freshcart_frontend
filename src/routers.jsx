@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "./pages/scrollTop.jsx";
+
 import  CartProvider  from "./components/CartProvider.jsx";
 import Navbar from './components/Navbar.jsx';
 import Footer from "./components/Footer.jsx";
@@ -11,14 +13,16 @@ import BookDetail from "./components/BookDetail.jsx";
 import SingleRecipe from "./components/singleRecipe.jsx";
 import ProductUpload from "./pages/upload.jsx";
 import Wishlist from "./components/Wishlist.jsx";
+import AllProducts from "./pages/AllProduct.jsx";
 
 function Routers() {
   return (
     <CartProvider>
       <BrowserRouter>
         <Navbar />
+         <ScrollToTop />
         <Routes>
-          <Route path="/home" element={<App/>} />
+          <Route path="/" element={<App/>} />
           <Route path="/user" element={<User />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/product/:id" element={<ProductDetail />} />
@@ -27,6 +31,8 @@ function Routers() {
                 <Route path="/recipes/:id" element={<SingleRecipe />} />
             <Route path="/upload-product" element={<ProductUpload />} />
                     <Route path="/wishlist" element={<Wishlist />} />
+                            <Route path="/all-products" element={<AllProducts />} />
+
 
 
 
