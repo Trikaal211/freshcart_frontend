@@ -19,7 +19,7 @@ const User = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3000/users/signin", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -33,7 +33,7 @@ const User = () => {
       }
 
       localStorage.setItem("accessToken", data.accessToken);
-      setToken(data.accessToken); // ✅ Update token in CartProvider
+      setToken(data.accessToken); //  Update token in CartProvider
 
       alert("Login successful!");
       navigate("/");

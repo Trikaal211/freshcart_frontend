@@ -16,7 +16,7 @@ const initialForm = {
   category: "",
   lifestyle: [],
   deliveryInfo: "",
-  availability: "In Stock", // ✅ Added back
+  availability: "In Stock", //  Added back
   features: [],
   ingredients: "",
   nutritionalInfo: {
@@ -50,8 +50,7 @@ function ProductUpload() {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/categories")
+axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
       .then((res) => setCategories(res.data))
       .catch((err) => console.log(err));
   }, []);
@@ -103,7 +102,7 @@ function ProductUpload() {
         formData.append("images", file);
       });
 
-      const res = await axios.post("http://localhost:3000/products", formData, {
+const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/products", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -112,7 +111,7 @@ function ProductUpload() {
       setForm(initialForm);
       setFiles([]);
     } catch (err) {
-      console.error("❌ Error uploading product:", err);
+      console.error(" Error uploading product:", err);
       alert("Error uploading product");
     }
   };
