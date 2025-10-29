@@ -20,31 +20,12 @@ const Lifestyle = () => {
     { icon: <GiAvocado className="icon" />, title: "Keto", text: "Good fats served in food", bg: "keto", type: "keto" }
   ];
 
-  const isMobile = window.innerWidth <= 485;
 
   return (
     <section className="lifestyle-section">
       <h2 className="lifestyle-title">Shop by lifestyle</h2>
 
-      {isMobile ? (
-        <div className="lifestyle-grid">
-          {lifestyles.map((item, index) => (
-            <div 
-              className="lifestyle-card" 
-              key={index}
-              onClick={() => navigate(`/lifestyle/${item.type}`)}
-               // navigate here
-
-              style={{ cursor: "pointer" }}
-              
-            >
-
-              <div className={`icon-wrapper ${item.bg}`}>{item.icon}</div>
-              <h3>{item.title}</h3>
-            </div>
-          ))}
-        </div>
-      ) : (
+  
         <Swiper
           modules={[Pagination, Autoplay]}
           spaceBetween={20}
@@ -71,7 +52,7 @@ const Lifestyle = () => {
             </SwiperSlide>
           ))}
         </Swiper>
-      )}
+      
     </section>
   );
 };
