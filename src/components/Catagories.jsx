@@ -14,7 +14,7 @@ const Categories = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:3000/categories");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/categories");
         const data = await res.json();
         setCategories(data);
       } catch (err) {
@@ -30,7 +30,7 @@ const Categories = () => {
   useEffect(() => {
     const fetchPopular = async () => {
       try {
-        const res = await fetch("http://localhost:3000/products/popular");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products/popular");
         const data = await res.json();
         setPopularProducts(data);
       } catch (err) {
