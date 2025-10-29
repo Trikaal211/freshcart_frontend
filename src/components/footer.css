@@ -213,8 +213,15 @@
 .accordion-header .acc-title {
   font-size: 0.98rem;
   font-weight: 600;
-  color: #fff;
-  text-align: left;
+  color: #2ffcff;
+}
+.acc-title {
+  text-align: center;
+  width: 100%;
+}
+.footer-bottom .span{
+  color: red;
+  font-size: 1.3rem;
 }
 
 .accordion-header .acc-icon {

@@ -18,10 +18,13 @@
   color: inherit; /* text color same rakho */
 }
 .book-card {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
+  display: flex;
+  width: 100%;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}   
 .mauka {
   display: flex;
   width: 100%;
@@ -30,21 +33,27 @@
   flex-wrap: wrap; 
 }
 
-.right-cover,
-.left-cover {
+.left-cover,
+.right-cover {
+  flex: 1 1 48%;
   display: flex;
-  padding: 0 12px;
-  flex: 1 1 0;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
-.right {
+.rightm {
+    flex: 1 1 50%;
+
+  display: flex; 
   border: 0.8px solid rgb(194, 194, 194);
   border-radius: 15px;
   padding: 24px;
-  background: #fff;
+}
+.rightm a{
+  text-decoration: none;
+  color: black;
 }
 
-/* === Recipe Card List === */
 .rc-list {
   display: flex;
   flex-direction: column;
@@ -101,21 +110,13 @@ object-position: center;
   font-size: 0.9rem;
   color: #6b7280;
 }
-.book-card {
-  display: flex;
-  background: #fff;
-  align-items: stretch;
-  border-radius: 16px;
-  padding: 16px;
-  gap: 20px;
-}
 
 
 
 .book-image {
-  width:  50%;
+  flex: 0 0 50%;
   border-radius: 12px;
-  display: flex;
+  overflow: hidden;
 }
 .book-image img {
   width: 100%;
@@ -126,7 +127,10 @@ object-position: center;
 }
 
 .book-info {
-  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding-left: 12px;
   text-align: left;
 }

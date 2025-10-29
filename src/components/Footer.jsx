@@ -157,7 +157,7 @@ const Footer = () => {
      
       <div className="footer-bottom">
         <p>
-          © All rights reserved. Made with ❤ by &hearts <span>xXMEN Studio</span>
+          © All rights reserved. Made with Jaalsaazi <span className="span">wolverin</span>
         </p>
       </div>
     </footer>

@@ -1,7 +1,8 @@
 import React from 'react'
 import List from './list'
-import { AiOutlinePercentage } from "react-icons/ai";
-import './productlist.css';
+import { Link } from "react-router-dom"
+import { AiOutlinePercentage } from "react-icons/ai"
+import './productlist.css'
 
 const Productlist = () => {
   const items = [
@@ -16,27 +17,31 @@ const Productlist = () => {
 
   return (
     <div className='baapu'>
-    <div className='main-list'>
-      <div className='list-cover'>
-        <div className="list">
-          {items.map((item, index) => (
-            index === 0 ? (
-              <List 
+      <div className='main-list'>
+        <div className='list-cover'>
+          <div className="list">
+            {items.map((item, index) => (
+              <Link 
+                to="/all-products" 
                 key={index} 
-                name={item.name} 
-                icon={<AiOutlinePercentage className="list-icons" />} 
-              />
-            ) : (
-              <List 
-                key={index} 
-                name={item.name} 
-                img={item.img} 
-              />
-            )
-          ))}
+                className="list-link"
+              >
+                {index === 0 ? (
+                  <List 
+                    name={item.name} 
+                    icon={<AiOutlinePercentage className="list-icons" />} 
+                  />
+                ) : (
+                  <List 
+                    name={item.name} 
+                    img={item.img} 
+                  />
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }

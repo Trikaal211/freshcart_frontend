@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './hero.css';
 
 const slides = [
@@ -8,6 +9,7 @@ const slides = [
 
 const Hero = () => {
   const [current, setCurrent] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -16,13 +18,12 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleShopNow = () => {
+    navigate("/all-products");
+  };
+
   return (
-   
-           
-
     <div className="hero">
- 
-
       {slides.map((slide, index) => (
         <img
           key={index}
@@ -32,16 +33,16 @@ const Hero = () => {
         />
       ))}
 
-   
       <div className="hero-overlay">
         <div className="hero-left">
           <p>{slides[current].para}</p>
           <h1 className="hero-title">{slides[current].title}</h1>
-          <button className="hero-btn">Shop now</button>
+          <button className="hero-btn" onClick={handleShopNow}>
+            Shop now
+          </button>
         </div>
         <div className='hero-right'></div>
       </div>
-
 
       <div className="hero-dots">
         {slides.map((_, index) => (

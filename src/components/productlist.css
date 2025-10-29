@@ -15,6 +15,10 @@
     justify-content: center;
   
 }
+.list-link {
+  text-decoration: none;
+  color: inherit;
+}
 .list-cover {
     width: 100%;          
     max-width: 1328px;  

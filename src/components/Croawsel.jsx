@@ -6,7 +6,7 @@ import { GoChevronRight } from "react-icons/go";
 
 
 import "swiper/css";
-import './croawsel.css'
+import './croawsel.css';
 
 const ResponsiveCarousel = () => {
    return (
@@ -34,7 +34,7 @@ const ResponsiveCarousel = () => {
                   <h2>Only fresh lemo to your table</h2>
 
                   <div className="shop">
-                        <a href="#">Shop now</a>
+                        <a href="/all-products">Shop now</a>
                       <GoChevronRight/>
                   </div>
                 
@@ -50,7 +50,7 @@ const ResponsiveCarousel = () => {
             <h2>Only fresh lemo to your table</h2>
           <div className="shop">
 
-          <a href="#">Shop now</a>
+          <a href="/all-products">Shop now</a>
           <GoChevronRight/>
                   </div>
             
@@ -65,7 +65,7 @@ const ResponsiveCarousel = () => {
                   <p>124 product</p>
                   <h2>Only fresh lemo to your table</h2>
                   <div className="shop">
-                        <a href="#">Shop now</a>
+                        <a href="all-products">Shop now</a>
                       <GoChevronRight/>
                   </div>
 

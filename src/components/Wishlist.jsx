@@ -194,7 +194,7 @@ useEffect(() => {
             {wishlistItems.map((item) => (
               <div key={item.productId._id} className="wishlist-item">
                 <div className="wishlist-item-image">
-                  <Link to={`/product/${item.productId._id}`}>
+<Link to={`/product/${item?.productId?._id}`}>
                     <img 
                       src={item.productId.images?.[0] || '/fallback.png'} 
                       alt={item.productId.title}

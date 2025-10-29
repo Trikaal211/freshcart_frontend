@@ -1,183 +1,378 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-
+import axios from 'axios';
 import './navbar.css';
+import DeliverySidebar from "./DeliverySidebar";
 
 import { IoGridOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiMiniChevronDown } from "react-icons/hi2";
-import { RiSearchLine } from "react-icons/ri";
+import { RiSearchLine, RiCloseLine } from "react-icons/ri";
 import { BsBrightnessHigh } from "react-icons/bs";
-import { FaRegUser } from "react-icons/fa";
-import { CiLocationOn } from "react-icons/ci";
-import { CiShoppingCart } from "react-icons/ci";
-                    
+import { FaRegUser, FaChevronDown } from "react-icons/fa";
+import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
+
 const Navbar = () => {
+  // ---------------- STATES ----------------
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setOpenCart] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [loadingCart, setLoadingCart] = useState(false);
   const [openAddress, setOpenAddress] = useState(false);
-  const [showForm, setShowForm] = useState(false); 
-  const [activeTab, setActiveTab] = useState("delivery"); 
-  const [show, Setshow] = useState({
-    home: false,         
-    shop: false,
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("delivery");
+  const [show, Setshow] = useState({ home: false, shop: false, account: false, pages: false });
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isFixed, setIsFixed] = useState(false);
-  
-  // NEW: User dropdown state
   const [userDropdown, setUserDropdown] = useState(false);
-  const navigate = useNavigate();
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileSearchTerm, setMobileSearchTerm] = useState("");
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  
+  // USER DATA STATE
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(false);
 
-  const toggleli = (menu) => {
-    Setshow((prev) => ({
-      ...prev,
-      [menu]: !prev[menu]
-    }));
+  const navigate = useNavigate();
+  const searchBoxRef = useRef(null);
+  const mobileSearchRef = useRef(null);
+
+  // ---------------- CATEGORIES DATA ----------------
+  const categoriesData = [
+    {
+      title: "Bakery & bread",
+      items: [
+        "Shop all",
+        "Bread",
+        "Pastries", 
+        "Bakery cookies",
+        "Cupcakes",
+        "Buns & rolls"
+      ]
+    },
+    {
+      title: "Meat products",
+      items: [
+        "Shop all",
+        "Fresh meat",
+        "Processed meat",
+        "Seafood",
+        "Poultry products",
+        "Prepared meat"
+      ]
+    },
+    {
+      title: "Vegetables",
+      items: [
+        "Shop all",
+        "Leafy greens",
+        "Root vegetables",
+        "Allium vegetables",
+        "Peppers and tomatoes",
+        "Cruciferous",
+        "Seasonal squashes",
+        "Beans, peas & lentils"
+      ]
+    },
+    {
+      title: "Sauces and ketchup",
+      items: [
+        "Shop all",
+        "Tomato-based sauces",
+        "Salad dressing", 
+        "Hot sauces"
+      ]
+    },
+    {
+      title: "Fresh fruits", 
+      items: [
+        "Shop all",
+        "Citrus fruits",
+        "Berries",
+        "Tropical fruits",
+        "Stone fruits",
+        "Exotic fruits",
+        "Melons"
+      ]
+    },
+    {
+      title: "Italian dinner",
+      items: [
+        "Shop all",
+        "Pasta & sauces",
+        "Italian cheese",
+        "Italian meats",
+        "Desserts & beverages"
+      ]
+    },
+    {
+      title: "Beverages",
+      items: [
+        "Shop all",
+        "Soft drinks",
+        "Juices",
+        "Sports & energy drinks",
+        "Tea and coffee",
+        "Alcoholic beverages"
+      ]
+    },
+    {
+      title: "Daily & eggs",
+      items: [
+        "Shop all",
+        "Chees",
+        "Milk & yogurt",
+        "Sour cream",
+        "Eggs",
+        "Butter & margarine"
+      ]
+    },
+    {
+      title: "Delivery",
+      items: [
+        "Set your address"
+      ]
+    }
+  ];
+
+  const featuredItems = [
+    "St. Patrick's day",
+    "Exotic fruits"
+  ];
+
+  // ---------------- DELIVERY / PICKUP STATE ----------------
+  const [deliveryAddresses, setDeliveryAddresses] = useState([
+    { id: 1, address: "567 Cherry Lane Apt B12 Sacramento, 95829" },
+    { id: 2, address: "1901 Thornridge Cir. Shiloh, Hawaii, 81063" }
+  ]);
+  const [pickupAddresses] = useState([
+    { id: 1, name: "Sacramento Supercenter", address: "8270 Delta Shores Cir S, Sacramento, CA 95832", open: "07:00 - 22:00" }
+  ]);
+  const [selectedDelivery, setSelectedDelivery] = useState(deliveryAddresses[0]?.id || null);
+  const [selectedPickup, setSelectedPickup] = useState(pickupAddresses[0]?.id || null);
+
+  const addDeliveryAddress = (newAddress) => {
+    const id = deliveryAddresses.length + 1;
+    setDeliveryAddresses([...deliveryAddresses, { id, address: newAddress }]);
+    setSelectedDelivery(id);
+    setShowForm(false);
   };
 
-  // Check if user is logged in  
+  // ---------------- HELPERS ----------------
+  const toggleli = (menu) => {
+    Setshow((prev) => ({ ...prev, [menu]: !prev[menu] }));
+  };
+
   const isLoggedIn = !!localStorage.getItem("accessToken");
 
-  // NEW: Logout function
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     setUserDropdown(false);
+    setUser(null);
     navigate("/user");
-    // Optional: reload to reset all states
     window.location.reload();
   };
 
+  function isTokenValid(token) {
+    if (!token) return false;
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  // FETCH USER DATA FUNCTION
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+    
+    setLoadingUser(true);
+    try {
+      const response = await axios.get("http://localhost:3000/users/me", {
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        },
+        withCredentials: true
+      });
+      setUser(response.data);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("accessToken");
+        setUser(null);
+      }
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  async function handleDelete(cartItemId) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) { alert("Please login first!"); return; }
+    try {
+      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to delete on server");
+      setCartItems(prev => prev.filter(item => item._id !== cartItemId));
+    } catch (err) { console.error("Error removing cart item:", err); }
+  }
+
+  async function handleQuantityChange(cartItemId, newQuantity) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) { alert("Please login first!"); return; }
+    try {
+      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quantity: newQuantity })
+      });
+      if (!res.ok) throw new Error("Failed to update quantity");
+      const updatedCart = await res.json();
+      setCartItems(updatedCart.products || []);
+    } catch (err) { console.error("Error updating quantity:", err); }
+  }
+
+  // Calculate total cart items count
+  const getCartItemsCount = () => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Handle user icon click
+  const handleUserIconClick = () => {
+    const isSmallScreen = window.innerWidth <= 348;
+    
+    if (isSmallScreen) {
+      if (isLoggedIn) {
+        navigate("/profile");
+      } else {
+        navigate("/user");
+      }
+    } else {
+      const token = localStorage.getItem("accessToken");
+      if (isTokenValid(token)) {
+        if (!user && isLoggedIn) {
+          fetchUserData();
+        }
+        setUserDropdown(!userDropdown);
+      } else { 
+        alert("Session expired"); 
+        localStorage.removeItem("accessToken"); 
+        setUser(null);
+        navigate("/user"); 
+      }
+    }
+  };
+
+  // ---------------- EFFECTS ----------------
   useEffect(() => {
-    if (menuOpen || cart || userDropdown || openAddress) {
+    // Fetch cart items on component mount
+    const fetchCartOnMount = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+      
+      setLoadingCart(true);
+      try {
+        const res = await fetch("http://localhost:3000/cart", {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          credentials: "include"
+        });
+        if (!res.ok) throw new Error("Failed to fetch cart");
+        const data = await res.json();
+        setCartItems(data.products || []);
+      } catch (err) { console.error("Error fetching cart:", err); }
+      finally { setLoadingCart(false); }
+    };
+    
+    fetchCartOnMount();
+  }, []);
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token && isTokenValid(token)) {
+      fetchUserData();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (menuOpen || cart || userDropdown || openAddress || categoriesOpen || mobileSearchOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
     }
-  }, [menuOpen, cart, userDropdown, openAddress]);
+  }, [menuOpen, cart, userDropdown, openAddress, categoriesOpen, mobileSearchOpen]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setIsFixed(true);
-      } else {
-        setIsFixed(false);
-      }
-    };
-
+    const handleScroll = () => setIsFixed(window.scrollY > 100);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
+  // Click outside handler for ALL dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // User dropdown
       if (userDropdown && !event.target.closest('.user-dropdown-container')) {
         setUserDropdown(false);
+      }
+      
+      // Categories dropdown
+      if (categoriesOpen && !event.target.closest('.categories-container')) {
+        setCategoriesOpen(false);
+      }
+      
+      // Search dropdown (desktop)
+      if (searchDropdownOpen && searchBoxRef.current && !searchBoxRef.current.contains(event.target)) {
+        setSearchDropdownOpen(false);
+      }
+      
+      // Mobile search sidebar
+      if (mobileSearchOpen && mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
+        setMobileSearchOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [userDropdown]);
+  }, [userDropdown, categoriesOpen, searchDropdownOpen, mobileSearchOpen]);
 
-  // Fetch cart items when cart sidebar opens
-  const token = localStorage.getItem("accessToken");
-  console.log(token)
-
-  // Fetch cart items when cart sidebar opens
   useEffect(() => {
     if (cart) {
+      const token = localStorage.getItem("accessToken");
       const fetchCart = async () => {
         setLoadingCart(true);
         try {
           const res = await fetch("http://localhost:3000/cart", {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // 🔹 added token  
-            },
-              credentials: "include"
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            credentials: "include"
           });
           if (!res.ok) throw new Error("Failed to fetch cart");
           const data = await res.json();
-          
           setCartItems(data.products || []);
-        } catch (err) {
-          console.error("Error fetching cart:", err);
-        } finally {
-          setLoadingCart(false);
-        }
+        } catch (err) { console.error("Error fetching cart:", err); }
+        finally { setLoadingCart(false); }
       };
       fetchCart();
     }
-  }, [cart, token]);
+  }, [cart]);
 
-  // 🔴 FIXED: handleDelete function with token
-  async function handleDelete(cartItemId) {
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
-
-    try {
-      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
-        method: "DELETE",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` // 🔹 added token
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete on server");
-      }
-
-      setCartItems((prev) => prev.filter((item) => item._id !== cartItemId));
-
-    } catch (err) {
-      console.error("Error removing cart item:", err);
-    }
-  }
-
-  // quantity update function
-  async function handleQuantityChange(cartItemId, newQuantity) {
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
-
-    try {
-      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
-        method: "PUT",   // ✅ PUT use karo
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ quantity: newQuantity })
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update quantity");
-      }
-
-      const updatedCart = await res.json();
-
-      // ✅ backend se full updated cart aa raha hai
-      setCartItems(updatedCart.products || []);
-    } catch (err) {
-      console.error("Error updating quantity:", err);
-    }
-  }
-
+  // Desktop search effect
   useEffect(() => {
-    if (!searchTerm) {
-      setSearchResults([]);
-      return;
+    if (!searchTerm) { 
+      setSearchResults([]); 
+      setSearchDropdownOpen(false);
+      return; 
     }
+    
     const fetchSearchResults = async () => {
       try {
         const res = await fetch("http://localhost:3000/products");
@@ -185,99 +380,298 @@ const Navbar = () => {
         const data = await res.json();
         const filtered = data.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
         setSearchResults(filtered);
+        setSearchDropdownOpen(true);
       } catch (err) { console.error(err); }
     };
+    
     const debounce = setTimeout(() => fetchSearchResults(), 300);
     return () => clearTimeout(debounce);
   }, [searchTerm]);
 
-function isTokenValid(token) {
-  if (!token) return false;
-  try {
-    const decoded = jwtDecode(token); // ✅ correct function name
-    console.log("Decoded token:", decoded);
-    const currentTime = Date.now() / 1000; // seconds
-    return decoded.exp > currentTime; // compare expiry properly
-  } catch (err) {
-    console.error("Token decode failed:", err);
-    return false; // invalid token
-  }
-}
+  // Mobile search effect
+  useEffect(() => {
+    if (!mobileSearchTerm) { 
+      setSearchResults([]); 
+      return; 
+    }
+    
+    const fetchSearchResults = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/products");
+        if (!res.ok) throw new Error("Search failed");
+        const data = await res.json();
+        const filtered = data.filter(p => p.title.toLowerCase().includes(mobileSearchTerm.toLowerCase()));
+        setSearchResults(filtered);
+      } catch (err) { console.error(err); }
+    };
+    
+    const debounce = setTimeout(() => fetchSearchResults(), 300);
+    return () => clearTimeout(debounce);
+  }, [mobileSearchTerm]);
 
-
+  // ---------------- JSX ----------------
   return (
     <div className={`main ${isFixed ? "fixed" : ""}`}>
       <div className="navbar-cover">
-        <div className='left'>
-          <button className="menu-btn"
-            onClick={() => setMenuOpen(!menuOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
+
+        {/* LEFT */}
+        <div className='lefti'>
+          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+            <span></span><span></span><span></span>
           </button>
+          <div className="nav-brand"><Link className="cart" to="/">Cartzilla</Link></div>
+          
+          {/* CATEGORIES DROPDOWN */}
+          <div className="categories-container">
+            <button 
+              className="category-btn" 
+              onClick={() => setCategoriesOpen(!categoriesOpen)}
+            >
+              <IoGridOutline size={20}/>Categories<MdKeyboardArrowDown />
+            </button>
+            
+            {categoriesOpen && (
+              <div className="categories-dropdown">
+                <div className="categories-content">
+                  <div className="categories-grid">
+                    {/* Column 1 */}
+                    <div className="category-column">
+                      <div className="category-section">
+                        <h4 className="category-title">Bakery & bread</h4>
+                        <ul className="category-items">
+                          {categoriesData[0].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="category-section">
+                        <h4 className="category-title">Meat products</h4>
+                        <ul className="category-items">
+                          {categoriesData[1].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
 
-        <div className="nav-brand">
-          <Link className="cart" to="/">Cartzilla</Link>
-        </div>
+                    {/* Column 2 */}
+                    <div className="category-column">
+                      <div className="category-section">
+                        <h4 className="category-title">Vegetables</h4>
+                        <ul className="category-items">
+                          {categoriesData[2].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="category-section">
+                        <h4 className="category-title">Sauces and ketchup</h4>
+                        <ul className="category-items">
+                          {categoriesData[3].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
 
-          <div className="category-btn">
-            <IoGridOutline size={20} className="catagory-icon" />
-            Categories
-            <MdKeyboardArrowDown className="cat-icon" />
+                    {/* Column 3 */}
+                    <div className="category-column">
+                      <div className="category-section">
+                        <h4 className="category-title">Fresh fruits</h4>
+                        <ul className="category-items">
+                          {categoriesData[4].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="category-section">
+                        <h4 className="category-title">Italian dinner</h4>
+                        <ul className="category-items">
+                          {categoriesData[5].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Column 4 */}
+                    <div className="category-column">
+                      <div className="category-section">
+                        <h4 className="category-title">Beverages</h4>
+                        <ul className="category-items">
+                          {categoriesData[6].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="category-section">
+                        <h4 className="category-title">Daily & eggs</h4>
+                        <ul className="category-items">
+                          {categoriesData[7].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="category-section">
+                        <h4 className="category-title">Delivery</h4>
+                        <ul className="category-items">
+                          {categoriesData[8].items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link to="/all-products" onClick={() => setCategoriesOpen(false)}>
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="categories-featured">
+                    <div className="featured-divider"></div>
+                    <div className="featured-items">
+                      {featuredItems.map((item, index) => (
+                        <div key={index} className="featured-item">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* MENU SIDEBAR */}
         <div className={`sidebar ${menuOpen ? "open" : ""}`}>
           <div className="sidebar-header">
             <h2>Browse Cartzilla</h2>
             <button className="close-btn" onClick={() => setMenuOpen(false)}>×</button>
           </div>
-
           <ul className="sidebar-menu">
-            <div onClick={() => toggleli("home")} className='accory'>Home</div>
-            {show.home ? (
-              <div className={`accoryy ${show.home ? "open" : ""}`}>
-                <li>hey</li><li>hey</li><li>hey</li><li>hey</li>
-              </div>
-            ) : false}
-
+            <Link to="/" className='accory' onClick={() => setMenuOpen(false)}>Home</Link>
+            
             <div onClick={() => toggleli("shop")} className='accory'>Shop</div>
-            {show.shop ? (
-              <div className={`accoryy ${show.shop ? "open" : ""}`}>
-                <li>hey</li><li>hey</li><li>hey</li><li>hey</li>
+            {show.shop && (
+              <div className={`accoryy open`}>
+                <li>
+                  <Link to="/all-products" onClick={() => setMenuOpen(false)}>All Products</Link>
+                </li>
+                <li>
+                  <Link to="/recipes" onClick={() => setMenuOpen(false)}>Recipes</Link>
+                </li>
+                <li>
+                  <Link to="/categories" onClick={() => setMenuOpen(false)}>Categories</Link>
+                </li>
               </div>
-            ) : false}
-
-            <div className='accory'>Account</div>
-            <div className='accory'>Pages</div>
-            <div className='accory'>Docs</div>
-            <div className='accory'>Components</div>
+            )}
+            
+            <div onClick={() => toggleli("account")} className='accory'>Account</div>
+            {show.account && (
+              <div className={`accoryy open`}>
+                <li>
+                  <Link to="/user" onClick={() => setMenuOpen(false)}>Login/Signup</Link>
+                </li>
+                <li>
+                  <Link to="/profile" onClick={() => setMenuOpen(false)}>My Profile</Link>
+                </li>
+                <li>
+                  <Link to="/orders" onClick={() => setMenuOpen(false)}>My Orders</Link>
+                </li>
+                <li>
+                  <Link to="/wishlist" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+                </li>
+              </div>
+            )}
+            
+            <div onClick={() => toggleli("pages")} className='accory'>Pages</div>
+            {show.pages && (
+              <div className={`accoryy open`}>
+                <li>
+                  <Link to="/about" onClick={() => setMenuOpen(false)}>About Us</Link>
+                </li>
+                <li>
+                  <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+                </li>
+                <li>
+                  <Link to="/faq" onClick={() => setMenuOpen(false)}>FAQ</Link>
+                </li>
+                <li>
+                  <Link to="/terms" onClick={() => setMenuOpen(false)}>Terms & Conditions</Link>
+                </li>
+                <li>
+                  <Link to="/privacy" onClick={() => setMenuOpen(false)}>Privacy Policy</Link>
+                </li>
+              </div>
+            )}
           </ul>
         </div>
 
-        {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)}></div>}
-   
-        <div className="search-box">
+        {/* SEARCH */}
+        <div className="search-box" ref={searchBoxRef}>
           <input 
             type="search" 
             className="nav-input" 
-            placeholder="Search for products" 
+            placeholder="Search for products"
             value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e)=>setSearchTerm(e.target.value)}
+            onFocus={() => {
+              if (searchResults.length > 0) {
+                setSearchDropdownOpen(true);
+              }
+            }}
           />
-          <div className='searchy'><RiSearchLine className="icon-s" /></div>
-          {searchResults.length > 0 && (
+          <div className='searchy'><RiSearchLine className="icon-s"/></div>
+          
+          {/* SEARCH RESULTS DROPDOWN */}
+          {searchDropdownOpen && searchResults.length > 0 && (
             <div className="search-results-dropdown">
-              {searchResults.map(product => (
+              {searchResults.map(p => (
                 <Link 
-                  key={product._id} 
-                  to={`/product/${product._id}`} 
-                  className="search-result-item"
-                  onClick={() => setSearchTerm("")}
+                  key={p._id} 
+                  to={`/product/${p._id}`} 
+                  className="search-result-item" 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSearchDropdownOpen(false);
+                  }}
                 >
                   <div className='search-item'>
-                  {product.title}
-                  <img className='srch-image' src={product.images[0]} alt="" />
+                    {p.title}
+                    <img className='srch-image' src={p.images[0]} alt=""/>
                   </div>
                 </Link>
               ))}
@@ -285,299 +679,229 @@ function isTokenValid(token) {
           )}
         </div>
 
+        {/* RIGHT */}
         <div className='right-side'>
           <div className="delivery-navbar" onClick={() => setOpenAddress(true)}>
             <div className="st">Delivery</div>
-            <div className="address">
-              <div className="dooja">Set your address</div>
-              <HiMiniChevronDown size={20} className="address-icon" />
-            </div>
+            <div className="address"><div className="dooja">Set your address</div><HiMiniChevronDown /></div>
           </div>
 
-          <div className={`address-sidebar ${openAddress ? "open" : ""}`}>
-            <div className="address-header">
-              <div className='address-header-top'>
-                <h3>Delivery options</h3>
-                <button className="close-btn" onClick={() => {
-                  setOpenAddress(false);
-                  setShowForm(false); 
-                  setActiveTab("delivery");
-                }}>×</button>
-              </div>
+          {/* DELIVERY PICKUP SIDEBAR */}
+          <DeliverySidebar
+            openAddress={openAddress}
+            setOpenAddress={setOpenAddress}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            deliveryAddresses={deliveryAddresses}
+            setDeliveryAddresses={setDeliveryAddresses}
+            pickupAddresses={pickupAddresses}
+            selectedDelivery={selectedDelivery}
+            setSelectedDelivery={setSelectedDelivery}
+            selectedPickup={selectedPickup}
+            setSelectedPickup={setSelectedPickup}
+            showForm={showForm}
+            setShowForm={setShowForm}
+            addDeliveryAddress={addDeliveryAddress}
+          />
 
-              <div className='switch-dp'>
-                <button 
-                  className={activeTab === "delivery" ? "active" : ""} 
-                  onClick={() => setActiveTab("delivery")}
-                >
-                  Delivery
-                </button>
-                <button 
-                  className={activeTab === "pickup" ? "active" : ""} 
-                  onClick={() => setActiveTab("pickup")}
-                >
-                  Pickup
-                </button>
-              </div>
-            </div>
-
-            {/* ---------- DELIVERY CONTENT ---------- */}
-            {activeTab === "delivery" && !showForm && (
-              <div className="address-body">
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="address" defaultChecked />
-                    <span>567 Cherry Lane Apt B12 Sacramento, 95829</span>
-                  </label>
-                  <div>
-                  <button className="remove-btn">×</button>
-                  </div>
-                </div>
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="address" />
-                    <span>1901 Thornridge Cir. Shiloh, Hawaii, 81063</span>
-                  </label>
- <div>
-                  <button className="remove-btn">×</button>
-                  </div>                </div>
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="address" />
-                    <span>3517 W. Gray St. Utica, Pennsylvania, 57867</span>
-                  </label>
- <div>
-                  <button className="remove-btn">×</button>
-                  </div>                </div>
-
-                <div className="add-address" onClick={() => setShowForm(true)}>
-                  + Add delivery address
-                </div>
-                <div className='cofirm-address'>
-                  <button>Confirm address</button>
-                </div>
-              </div>
-            )}
-
-            {/* ---------- DELIVERY ADD FORM ---------- */}
-            {activeTab === "delivery" && showForm && (
-              <div className="address-form">
-                <div className="back-btn" onClick={() => setShowForm(false)}>
-                  ← Back to my addresses
-                </div>
-
-                <h4>Add an address to start ordering</h4>
-                <button className="map-btn"> Find on map</button>
-
-                <form>
-                  <select required>
-                    <option value="">Select state</option>
-                    <option>California</option>
-                    <option>Texas</option>
-                  </select>
-
-                  <input type="text" placeholder="Postcode *" required />
-                  <select required>
-                    <option value="">Select city</option>
-                    <option>Sacramento</option>
-                    <option>Austin</option>
-                  </select>
-                  <input type="text" placeholder="Street address *" required />
-
-                  <button type="submit" className="confirm-btn">
-                    Confirm address
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* ---------- PICKUP CONTENT ---------- */}
-            {activeTab === "pickup" && !showForm && (
-              <div className="address-body">
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="pickup" defaultChecked />
-                    <div>
-                      <strong>Sacramento Supercenter</strong>
-                      <div>8270 Delta Shores Cir S, Sacramento, CA 95832</div>
-                      <div>Open: <b>07:00 - 22:00</b></div>
-                    </div>
-                  </label>
-                  <button className="remove-btn">×</button>
-                </div>
-
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="pickup" />
-                    <div>
-                      <strong>West Sacramento Supercenter</strong>
-                      <div>755 Riverpoint Ct, West Sacramento, CA 95605</div>
-                      <div>Open: <b>07:00 - 21:00</b></div>
-                    </div>
-                  </label>
-                  <button className="remove-btn">×</button>
-                </div>
-
-                <div className='address'>
-                  <label className="address-option">
-                    <input type="radio" name="pickup" />
-                    <div>
-                      <strong>Rancho Cordova Supercenter</strong>
-                      <div>10655 Folsom Blvd, Rancho Cordova, CA 95670</div>
-                      <div>Open: <b>08:00 - 23:00</b></div>
-                    </div>
-                  </label>
-                  <button className="remove-btn">×</button>
-
-                </div>
-
-                <div onClick={()=>setShowForm(true)} className="add-address">
-                  + Add store address
-                </div>
-                <div className='cofirm-address'>
-                  <button>Confirm address</button>
-                </div>
-              </div>
-            )}
-            {activeTab === "pickup" && showForm && (
-              <>
-                <div onClick={()=>setShowForm(false)}>back</div>
-                <div>enter store address </div>
-              </>
-            )}
-          </div>
-
-          {openAddress && <div className="overlay" onClick={() => setOpenAddress(false)}></div>}
-
+          {/* USER & CART */}
           <div className="right-corner">
-            <div className="right-div"><BsBrightnessHigh size={18} /></div>
-            <div className="right-div-l"><CiLocationOn size={22} /></div>
+            {/* MOBILE SEARCH ICON */}
+            <div className="right-div mobile-search-icon" onClick={() => setMobileSearchOpen(true)}>
+              <RiSearchLine size={18}/>
+            </div>
+
+            <div className="right-div"><BsBrightnessHigh size={18}/></div>
+            <div className="right-div-l"><CiLocationOn size={22}/></div>
             
-            {/* UPDATED USER ICON WITH DROPDOWN */}
+            {/* USER DROPDOWN */}
             <div className="right-div user user-dropdown-container">
               {isLoggedIn ? (
-                <>
-                 <div 
-  className="user-icon-wrapper"
-  onClick={() => {
-    const token = localStorage.getItem("accessToken");
-    if (isTokenValid(token)) {
-      setUserDropdown(!userDropdown);
-    } else {
-      alert("Session expired. Please login again.");
-      localStorage.removeItem("accessToken");
-      navigate("/user");
-    }
-  }}
->
-  <FaRegUser size={18} />
-</div>
-                  
-                  {/* USER DROPDOWN MENU */}
-                  {userDropdown && (
-                    <div className="user-dropdown">
-                      <Link 
-                        to="/profile" 
-                        className="dropdown-item"
-                        onClick={() => setUserDropdown(false)}
-                      >
-                        My Profile
-                      </Link>
-                          <Link 
-      to="/wishlist" 
-      className="dropdown-item"
-      onClick={() => setUserDropdown(false)}
-    >
-      My Wishlist
-    </Link>
-
-                      <Link 
-                        to="/orders" 
-                        className="dropdown-item"
-                        onClick={() => setUserDropdown(false)}
-                      >
-                        My Orders
-                      </Link>
-                      
-                      <button 
-                        className="dropdown-item logout-btn"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </>
+                <div 
+                  className="user-icon-wrapper"
+                  onClick={handleUserIconClick}
+                >
+                  <FaRegUser size={16} className='user-icon'/>
+                  <FaChevronDown size={10} className="dropdown-arroww" />
+                </div>
               ) : (
-                <Link to="/user">
-                  <FaRegUser size={18} />
+                <Link to="/user" className="user-login-link">
+                  <FaRegUser size={16} />
                 </Link>
+              )}
+              
+              {/* USER DROPDOWN MENU */}
+              {userDropdown && window.innerWidth > 348 && (
+                <div className="user-dropdown-menu">
+                  <div className="dropdown-header">
+                    <div className="user-avatar">
+                      <FaRegUser size={20} />
+                    </div>
+                    <div className="user-info">
+                      {loadingUser ? (
+                        <div className="user-loading">Loading...</div>
+                      ) : user ? (
+                        <>
+                          <div className="user-name">
+                            Welcome {user.name || user.firstName || user.email.split('@')[0]}
+                          </div>
+                          <div className="user-email">{user.email}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="user-name">Welcome User</div>
+                          <div className="user-email">user@example.com</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="dropdown-divider"></div>
+                  
+                  <Link 
+                    to="/profile" 
+                    className="dropdown-item"
+                    onClick={() => setUserDropdown(false)}
+                  >
+                    <span className="item-icon"></span>
+                    My Profile
+                  </Link>
+                  
+                  <Link 
+                    to="/wishlist" 
+                    className="dropdown-item"
+                    onClick={() => setUserDropdown(false)}
+                  >
+                    <span className="item-icon"></span>
+                    My Wishlist
+                  </Link>
+                  
+                  <Link 
+                    to="/orders" 
+                    className="dropdown-item"
+                    onClick={() => setUserDropdown(false)}
+                  >
+                    <span className="item-icon"></span>
+                    My Orders
+                  </Link>
+                  
+                  <div className="dropdown-divider"></div>
+                  
+                  <button 
+                    className="dropdown-item logout-btn"
+                    onClick={handleLogout}
+                  >
+                    <span className="item-icon"></span>
+                    Logout
+                  </button>
+                </div>
               )}
             </div>
 
-            <div onClick={()=>setOpenCart(true)}  className="right-div">
-              <CiShoppingCart size={24} />
+            {/* CART ICON */}
+            <div onClick={()=>setOpenCart(true)} className="right-div cart-icon">
+              <CiShoppingCart size={24}/>
+              {cartItems.length > 0 && (
+                <span className="cart-badge">{getCartItemsCount()}</span>
+              )}
             </div>
           </div>
-      
-          {/* --------- MERGED CART SIDE --------- */}
-          <div className={`cart-side ${cart? "open" : ""}`}>
+
+          {/* CART SIDEBAR */}
+          <div className={`cart-side ${cart? "open":""}`}>
             <div className="cart-header">
-              <h2>Your Cart</h2>
+              <h2>Your Cart ({getCartItemsCount()} items)</h2>
               <button onClick={()=>setOpenCart(false)}>×</button>
             </div>
-
-            {loadingCart ? (
-              <p>Loading cart...</p>
-            ) : cartItems.length === 0 ? (
-              <p>Your cart is empty</p>
-            ) : (
+            {loadingCart ? <p>Loading cart...</p> : cartItems.length===0 ? <p>Your cart is empty</p> : (
               <div className="cart-items">
-            {cartItems.map((item) => {
-  const product = item.productId;  // populated product
-  if (!product) return null;       // agar null mila toh skip karo
-
-  return (
-    <div key={item._id} className="cart-item">
-      <img 
-        src={product.images?.[0] || "/fallback.png"} 
-        alt={product.title} 
-      />
-      <div className="cart-item-info">
-        <h4>{product.title}</h4>
-        <div className="quantity-control">
-<button 
-  onClick={() => handleQuantityChange(item._id, item.quantity - 1)} 
-  disabled={item.quantity <= 1}
->
-  -
-</button>
-
-<span>{item.quantity}</span>
-
-<button 
-  onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
->
-  +
-</button>
-</div>
-        <p>Qty: {item.quantity}</p>
-<p>Total: ${( (product.discountPrice || product.price) * item.quantity ).toFixed(2)}</p>
-      </div>
-      {/* 🔴 FIXED delete button */}
-      <button onClick={() => handleDelete(item._id)}>delete</button>
-    </div>
-  );
-})}
+                {cartItems.map(item=>{
+                  const product = item.productId; if(!product) return null;
+                  return (
+                    <div key={item._id} className="cart-item">
+                      <img src={product.images?.[0] || "/fallback.png"} alt={product.title}/>
+                      <div className="cart-item-info">
+                        <h4>{product.title}</h4>
+                        <div className="quantity-control">
+                          <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
+                          <span>{item.quantity}</span>
+                          <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+                        </div>
+                        <p>Qty: {item.quantity}</p>
+                        <p>Total: ${( (product.discountPrice || product.price) * item.quantity ).toFixed(2)}</p>
+                      </div>
+                      <button onClick={()=>handleDelete(item._id)}>delete</button>
+                    </div>
+                  )
+                })}
               </div>
             )}
-            {cartItems.length>0 &&<button className="checkout-btn">Go to Checkout</button>}
+            {cartItems.length>0 && (
+              <button className="checkout-btn" onClick={() => {
+                const selectedAddress = activeTab === "delivery" 
+                  ? deliveryAddresses.find(a => a.id === selectedDelivery) 
+                  : pickupAddresses.find(a => a.id === selectedPickup);
+                
+                navigate("/checkout", { 
+                  state: { 
+                    selectedAddress, 
+                    type: activeTab,
+                    cartItems: cartItems
+                  } 
+                });
+              }}>Go to Checkout</button>
+            )}
           </div>
-          {cart && <div className="overlay" onClick={() => setOpenCart(false)}></div>}
         </div>
+
+        {/* MOBILE SEARCH SIDEBAR */}
+        <div className={`mobile-search-sidebar ${mobileSearchOpen ? "open" : ""}`} ref={mobileSearchRef}>
+          <div className="mobile-search-header">
+            <button className="close-btn" onClick={() => setMobileSearchOpen(false)}>
+              <RiCloseLine size={20} />
+            </button>
+            <input 
+              type="text" 
+              className="mobile-search-input" 
+              placeholder="Search for products..."
+              value={mobileSearchTerm}
+              onChange={(e) => setMobileSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="mobile-search-results">
+            {searchResults.length > 0 ? (
+              searchResults.map(p => (
+                <Link 
+                  key={p._id} 
+                  to={`/product/${p._id}`} 
+                  className="search-result-item" 
+                  onClick={() => {
+                    setMobileSearchTerm("");
+                    setMobileSearchOpen(false);
+                  }}
+                >
+                  <div className='search-item'>
+                    {p.title}
+                    <img className='srch-image' src={p.images[0]} alt=""/>
+                  </div>
+                </Link>
+              ))
+            ) : mobileSearchTerm ? (
+              <p>No products found</p>
+            ) : null}
+          </div>
+        </div>
+
+        {/* OVERLAYS */}
+        {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)}></div>}
+        {openAddress && <div className="overlay" onClick={()=>setOpenAddress(false)}></div>}
+        {cart && <div className="overlay" onClick={()=>setOpenCart(false)}></div>}
+        {categoriesOpen && <div className="overlay" onClick={() => setCategoriesOpen(false)}></div>}
+        {mobileSearchOpen && <div className="overlay" onClick={() => setMobileSearchOpen(false)}></div>}
       </div>
     </div>
   )
-}
+};
 
 export default Navbar;

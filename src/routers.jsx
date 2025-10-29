@@ -14,6 +14,9 @@ import SingleRecipe from "./components/singleRecipe.jsx";
 import ProductUpload from "./pages/upload.jsx";
 import Wishlist from "./components/Wishlist.jsx";
 import AllProducts from "./pages/AllProduct.jsx";
+import Checkout from "./components/Checkout.jsx";
+import Signup from "./components/Signup.jsx";
+import Profile from "./components/Profile.jsx";
 
 function Routers() {
   return (
@@ -24,6 +27,9 @@ function Routers() {
         <Routes>
           <Route path="/" element={<App/>} />
           <Route path="/user" element={<User />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/sign-up" element={<Signup />} />
+
           <Route path="/categories" element={<Categories />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/lifestyle/:type" element={<LifestyleProducts />} />
@@ -31,7 +37,9 @@ function Routers() {
                 <Route path="/recipes/:id" element={<SingleRecipe />} />
             <Route path="/upload-product" element={<ProductUpload />} />
                     <Route path="/wishlist" element={<Wishlist />} />
-                            <Route path="/all-products" element={<AllProducts />} />
+              <Route path="/all-products" element={<AllProducts />} />
+                            <Route path="/profile" element={<Profile />} />
+
 
 
 

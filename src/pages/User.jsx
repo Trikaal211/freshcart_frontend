@@ -84,9 +84,9 @@ const User = () => {
             </div>
             <div>Forget password?</div>
           </div>
-
           <button type="submit" className="sign-in">Sign In</button>
         </form>
+          <button onClick={()=>navigate("/sign-up")}>sign-up</button>
 
         <div className="break">
           <hr />

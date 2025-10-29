@@ -10,7 +10,7 @@ const Categories = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch Categories
+  // ✅ Fetch Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -26,7 +26,7 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
-  // Fetch 8 Most Popular Products
+  // ✅ Fetch 8 Most Popular Products
   useEffect(() => {
     const fetchPopular = async () => {
       try {
@@ -42,9 +42,14 @@ const Categories = () => {
     fetchPopular();
   }, []);
 
-  // View All click handler
+  // ✅ View All click handler
   const handleViewAll = () => {
     navigate("/all-products");
+  };
+
+  // ✅ Category click handler
+  const handleCategoryClick = (categoryName) => {
+    navigate(`/all-products?category=${encodeURIComponent(categoryName)}`);
   };
 
   return (
@@ -59,7 +64,12 @@ const Categories = () => {
           ) : (
             <div className="category-list">
               {categories.map((cat, index) => (
-                <div key={index} className="category-item">
+                <div
+                  key={index}
+                  className="category-item"
+                  onClick={() => handleCategoryClick(cat.name)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="aalu">
                     <img src={cat.image} alt={cat.name} />
                   </div>
