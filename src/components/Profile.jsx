@@ -13,11 +13,11 @@ const Profile = () => {
       try {
         console.log("hey")
         const [userRes, cartRes] = await Promise.all([
-          axios.get("http://localhost:3000/users/me", {
+axios.get("https://freshcart-backend-4wrc.onrender.com/users/me", {
             headers: { Authorization: `Bearer ${token}` },
               withCredentials: true,
           }),
-          axios.get("http://localhost:3000/cart", {
+axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);

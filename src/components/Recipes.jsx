@@ -13,7 +13,7 @@ const Recipes = () => {
   // Fetch recipes from backend
   const fetchRecipes = async () => {
     try {
-      const res = await fetch("http://localhost:3000/recipes");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/recipes");
       const data = await res.json();
       setRecipes(data);
     } catch (err) {
@@ -24,7 +24,7 @@ const Recipes = () => {
   // Fetch books from backend
   const fetchBooks = async () => {
     try {
-      const res = await fetch("http://localhost:3000/books");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/books");
       const data = await res.json();
       setBooks(data);
     } catch (err) {

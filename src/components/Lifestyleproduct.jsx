@@ -11,7 +11,7 @@ const LifestyleProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/products/lifestyle/${type}`);
+const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/lifestyle/${type}`);
         const data = await res.json();
         setProducts(data);
       } catch (err) {

@@ -46,7 +46,7 @@ export default function Checkout() {
 
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:3000/cart", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
         headers: { 
           "Content-Type": "application/json", 
           Authorization: `Bearer ${token}` 

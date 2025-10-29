@@ -13,7 +13,7 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/products/${id}`);
+const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/${id}`);
         const data = await res.json();
         setProduct(data);
         setMainImage(data.images?.[0]);

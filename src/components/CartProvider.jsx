@@ -13,7 +13,7 @@ const CartProvider = ({ children }) => {
       }
       
       try {
-        const res = await fetch("http://localhost:3000/cart", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -42,7 +42,7 @@ const addToCart = async (productId, quantity = 1, price = 0) => {
   if (!latestToken) return alert("Please login first!");
 
   try {
-    const res = await fetch("http://localhost:3000/cart/add", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

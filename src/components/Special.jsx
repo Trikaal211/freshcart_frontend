@@ -22,7 +22,7 @@ const SpecialProducts = () => {
   useEffect(() => {
     const fetchSpecialProducts = async () => {
       try {
-        const response = await fetch("http://localhost:3000/products/tag/special");
+const response = await fetch("https://freshcart-backend-4wrc.onrender.com/products/tag/special");
         const data = await response.json();
 
         setProducts(
@@ -50,7 +50,7 @@ const SpecialProducts = () => {
 
     const fetchWishlistStatus = async () => {
       try {
-        const res = await fetch("http://localhost:3000/wishlist/all", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist/all", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -78,13 +78,13 @@ const SpecialProducts = () => {
     const isInWishlist = wishlist[productId];
     try {
       if (isInWishlist) {
-        await fetch(`http://localhost:3000/wishlist/${productId}`, {
+await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/${productId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
         setWishlist((prev) => ({ ...prev, [productId]: false }));
       } else {
-        await fetch("http://localhost:3000/wishlist", {
+await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

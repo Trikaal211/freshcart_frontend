@@ -119,7 +119,7 @@ useEffect(() => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/wishlist', {
+const response = await fetch('https://freshcart-backend-4wrc.onrender.com/wishlist', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

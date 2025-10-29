@@ -18,7 +18,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:3000/users/signup", formData);
+const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/users/signup", formData);
       setMessage(res.data.message);
       console.log(res.data);
     } catch (err) {

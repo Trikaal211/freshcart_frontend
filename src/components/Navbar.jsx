@@ -195,7 +195,7 @@ const Navbar = () => {
     
     setLoadingUser(true);
     try {
-      const response = await axios.get("http://localhost:3000/users/me", {
+const response = await axios.get("https://freshcart-backend-4wrc.onrender.com/users/me", {
         headers: { 
           Authorization: `Bearer ${token}` 
         },
@@ -217,7 +217,7 @@ const Navbar = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) { alert("Please login first!"); return; }
     try {
-      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
+const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/cart/${cartItemId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
@@ -230,7 +230,7 @@ const Navbar = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) { alert("Please login first!"); return; }
     try {
-      const res = await fetch(`http://localhost:3000/cart/${cartItemId}`, {
+const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/cart/${cartItemId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ quantity: newQuantity })
@@ -281,7 +281,7 @@ const Navbar = () => {
       
       setLoadingCart(true);
       try {
-        const res = await fetch("http://localhost:3000/cart", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           credentials: "include"
         });
@@ -351,7 +351,7 @@ const Navbar = () => {
       const fetchCart = async () => {
         setLoadingCart(true);
         try {
-          const res = await fetch("http://localhost:3000/cart", {
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             credentials: "include"
           });
@@ -375,7 +375,7 @@ const Navbar = () => {
     
     const fetchSearchResults = async () => {
       try {
-        const res = await fetch("http://localhost:3000/products");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products");
         if (!res.ok) throw new Error("Search failed");
         const data = await res.json();
         const filtered = data.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -397,7 +397,7 @@ const Navbar = () => {
     
     const fetchSearchResults = async () => {
       try {
-        const res = await fetch("http://localhost:3000/products");
+const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products");
         if (!res.ok) throw new Error("Search failed");
         const data = await res.json();
         const filtered = data.filter(p => p.title.toLowerCase().includes(mobileSearchTerm.toLowerCase()));

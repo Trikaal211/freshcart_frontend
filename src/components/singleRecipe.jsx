@@ -13,7 +13,7 @@ const SingleRecipe = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/recipes/${id}`);
+const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/recipes/${id}`);
         const data = await res.json();
         setRecipe(data);
       } catch (err) {

@@ -19,7 +19,7 @@ useEffect(() => {
 
   const checkWishlistStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/wishlist/check/${product._id}`, {
+const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/check/${product._id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (response.ok) {
@@ -79,7 +79,7 @@ useEffect(() => {
 
   const addToWishlist = async () => {
     try {
-      const response = await fetch("http://localhost:3000/wishlist", {
+const response = await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ useEffect(() => {
 
   const removeFromWishlist = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/wishlist/${product._id}`, {
+const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/${product._id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
