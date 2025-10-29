@@ -1,5 +1,5 @@
 import React from 'react'
-import List from './list'
+import List from './List'
 import { Link } from "react-router-dom"
 import { AiOutlinePercentage } from "react-icons/ai"
 import './productlist.css'
