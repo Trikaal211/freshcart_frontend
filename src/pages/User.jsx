@@ -36,7 +36,7 @@ const User = () => {
       setToken(data.accessToken); // ✅ Update token in CartProvider
 
       alert("Login successful!");
-      navigate("/home");
+      navigate("/");
     } catch (err) {
       console.error("Login error:", err);
     }
@@ -86,7 +86,7 @@ const User = () => {
           </div>
           <button type="submit" className="sign-in">Sign In</button>
         </form>
-          <button onClick={()=>navigate("/sign-up")}>sign-up</button>
+          <button className="sign-up" onClick={()=>navigate("/sign-up")}>sign-up</button>
 
         <div className="break">
           <hr />
@@ -97,14 +97,13 @@ const User = () => {
         <div className="social-icon-user">
           <Icon icon={<FaGoogle />} text="Google" />
           <Icon icon={<TfiFacebook />} text="Facebook" />
-          <a href="https://www.google.com" target="_blank" rel="noopener noreferrer">
             <Icon icon={<FaApple />} text="Apple" />
-          </a>
+         
         </div>
 
         <div className="footer-user">
           <a href="#">Need help?</a>
-          <p>© All rights reserved. Made by xXmen Studio</p>
+          <p>© All rights reserved. Made by  <span className="wolvy">Wolv.......</span></p>
         </div>
       </div>
 

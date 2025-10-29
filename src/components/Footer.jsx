@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from 'react-router-dom';
 
-import "./Footer.css";
+import "./footer.css";
 import {
   FaInstagram,
   FaFacebook,
