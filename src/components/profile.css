@@ -257,6 +257,22 @@
   cursor: pointer;
   margin-top: 10px;
 }
+.ship-btn {
+  background-color: #008c4a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.ship-btn:hover {
+  background-color: #00b65a;
+}
+.ship-btn.disabled {
+  background-color: gray;
+  cursor: not-allowed;
+}
 
 .profile-tabs {
   display: flex;
