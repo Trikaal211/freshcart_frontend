@@ -57,8 +57,9 @@ const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/${
 
       {/* 📄 RIGHT - Product Info */}
       <div className="product-info">
-        <span className="category">{product.category}</span>
-        <h1>{product.title}</h1>
+<span className="category">
+  {product.category?.name || product.category}
+</span>        <h1>{product.title}</h1>
         <p className="subtitle">{product.subtitle}</p>
 
         <div className="ratings">
