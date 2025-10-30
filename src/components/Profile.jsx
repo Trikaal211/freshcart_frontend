@@ -275,7 +275,7 @@ const Profile = () => {
           ) : (
             <div className="empty-state">
               <p>You haven't placed any orders yet.</p>
-              <button onClick={() => window.location.href = "/products"}>
+              <button onClick={() => window.location.href = "/all-products"}>
                 Start Shopping
               </button>
             </div>
@@ -353,7 +353,7 @@ const Profile = () => {
           ) : (
             <div className="empty-state">
               <p>You haven't uploaded any products yet.</p>
-              <button onClick={() => window.location.href = "/upload"}>
+              <button onClick={() => window.location.href = "/upload-product"}>
                 Upload Your First Product
               </button>
             </div>
