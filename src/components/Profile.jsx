@@ -51,6 +51,7 @@ const Profile = () => {
           
           // My Products - with fallback
           axios.get("https://freshcart-backend-4wrc.onrender.com/products/my-products", {
+             credentials: "include",
             headers: { Authorization: `Bearer ${token}` }
           }).catch(err => {
             console.error("My Products fetch error:", err);
