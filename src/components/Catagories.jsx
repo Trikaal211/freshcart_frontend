@@ -26,7 +26,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/categories"
     fetchCategories();
   }, []);
 
-  // ✅ Fetch 8 Most Popular Products
+  // Fetch 8 Most Popular Products
   useEffect(() => {
     const fetchPopular = async () => {
       try {
