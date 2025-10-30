@@ -21,7 +21,7 @@ useEffect(() => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/wishlist', {
+const response = await fetch('https://freshcart-backend-4wrc.onrender.com/wishlist', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
     
@@ -55,7 +55,7 @@ useEffect(() => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/wishlist/${productId}`, {
+const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -84,7 +84,7 @@ useEffect(() => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/cart/add', {
+const response = await fetch('https://freshcart-backend-4wrc.onrender.com/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
