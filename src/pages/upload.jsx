@@ -8,16 +8,15 @@ const initialForm = {
   brand: "",
   subtitle: "",
   description: "",
-  price: 0,
-  discountPrice: 0,
-  discountPercentage: 0,
-  quantity: 0,
+  price: "",
+  discountPrice: "",
+  quantity: 1,
   weight: "",
   category: "",
   lifestyle: [],
   deliveryInfo: "",
   availability: "In Stock",
-  features: [],
+  features: "",
   ingredients: "",
   nutritionalInfo: {
     calories: "",
@@ -25,7 +24,7 @@ const initialForm = {
     carbs: "",
     fat: "",
   },
-  tags: [],
+  tags: "",
   shipping: {
     freeShipping: false,
     shippingTime: "",
@@ -35,12 +34,7 @@ const initialForm = {
 };
 
 const lifestyleOptions = [
-  "Gluten Free",
-  "Vegan",
-  "Keto",
-  "Plant-based",
-  "Sugar Free",
-  "Nut Free",
+  "Gluten Free", "Vegan", "Keto", "Plant-based", "Sugar Free", "Nut Free"
 ];
 const availabilityOptions = ["In Stock", "Out of Stock", "Pre-order"];
 
@@ -48,142 +42,132 @@ function ProductUpload() {
   const [form, setForm] = useState(initialForm);
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
+  const [preview, setPreview] = useState([]);
 
-  // ✅ Fetch categories from backend
+  // Fetch categories
   useEffect(() => {
-    axios
-      .get("https://freshcart-backend-4wrc.onrender.com/categories")
-      .then((res) => setCategories(res.data))
-      .catch((err) => console.log("Error fetching categories:", err));
+    axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
+      .then(res => setCategories(res.data))
+      .catch(err => console.error("❌ Category fetch error:", err));
   }, []);
 
-  // ✅ Handle input changes
+  // Handle input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (name.includes("nutritionalInfo.")) {
       const key = name.split(".")[1];
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         nutritionalInfo: { ...prev.nutritionalInfo, [key]: value },
       }));
     } else if (name.includes("shipping.")) {
       const key = name.split(".")[1];
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         shipping: { ...prev.shipping, [key]: type === "checkbox" ? checked : value },
       }));
     } else if (type === "checkbox" && name === "lifestyle") {
-      let updatedLifestyle = [...form.lifestyle];
-      if (checked) updatedLifestyle.push(value);
-      else updatedLifestyle = updatedLifestyle.filter((item) => item !== value);
-      setForm((prev) => ({ ...prev, lifestyle: updatedLifestyle }));
+      let updated = [...form.lifestyle];
+      checked ? updated.push(value) : updated = updated.filter(item => item !== value);
+      setForm(prev => ({ ...prev, lifestyle: updated }));
     } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
+      setForm(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // ✅ Handle image upload
+  // Handle images
   const handleImageChange = (e) => {
-    setFiles(Array.from(e.target.files));
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(selectedFiles);
+    setPreview(selectedFiles.map(f => URL.createObjectURL(f)));
   };
 
-  // ✅ Handle form submit (with token)
+  // Submit product
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-const token = localStorage.getItem("accessToken");
-      if (!token) {
-        alert("Please login first!");
-        return;
-      }
+      const token = localStorage.getItem("accessToken");
+      if (!token) return alert("⚠️ Please login first");
 
       const formData = new FormData();
-
       Object.entries(form).forEach(([key, value]) => {
-        if (typeof value === "object") {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, value);
-        }
+        if (typeof value === "object") formData.append(key, JSON.stringify(value));
+        else formData.append(key, value);
       });
 
-      files.forEach((file) => {
-        formData.append("images", file);
-      });
+      files.forEach(file => formData.append("images", file));
 
-      // ✅ API call with Authorization header
       const res = await axios.post(
         "https://freshcart-backend-4wrc.onrender.com/products",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // ✅ send user token
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      alert("Product uploaded successfully!");
+      alert("✅ Product uploaded successfully!");
       console.log("Response:", res.data);
       setForm(initialForm);
       setFiles([]);
+      setPreview([]);
     } catch (err) {
-      console.error("Error uploading product:", err);
-      alert("Error uploading product");
+      console.error("❌ Upload error:", err);
+      alert(err.response?.data?.error || "Upload failed. Check console.");
     }
   };
 
   return (
-    <div className="product-upload-container">
-      <h1>Upload Product</h1>
+    <div className="upload-wrapper">
+      <h2>🛍️ Upload New Product</h2>
 
-      <form onSubmit={handleSubmit} className="product-form">
-        <input type="text" name="title" placeholder="Title" value={form.title} onChange={handleChange} required />
+      <form className="upload-form" onSubmit={handleSubmit}>
+        <input type="text" name="title" placeholder="Product Title" value={form.title} onChange={handleChange} required />
         <input type="text" name="slug" placeholder="Slug" value={form.slug} onChange={handleChange} required />
-        <input type="text" name="brand" placeholder="Brand" value={form.brand} onChange={handleChange} required />
+        <input type="text" name="brand" placeholder="Brand" value={form.brand} onChange={handleChange} />
         <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} />
 
-        <input type="number" name="price" placeholder="Price" value={form.price} onChange={handleChange} />
-        <input type="number" name="discountPrice" placeholder="Discount Price" value={form.discountPrice} onChange={handleChange} />
-        <input type="number" name="quantity" placeholder="Quantity" value={form.quantity} onChange={handleChange} />
+        <div className="grid-2">
+          <input type="number" name="price" min="0" placeholder="Price" value={form.price} onChange={handleChange} required />
+          <input type="number" name="discountPrice" min="0" placeholder="Discount Price" value={form.discountPrice} onChange={handleChange} />
+        </div>
 
-        <input type="file" name="photos" multiple onChange={handleImageChange} />
+        <input type="number" name="quantity" min="1" placeholder="Quantity" value={form.quantity} onChange={handleChange} />
 
-        <select name="category" value={form.category} onChange={handleChange}>
+        <select name="category" value={form.category} onChange={handleChange} required>
           <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
+          {categories.map(cat => (
+            <option key={cat._id} value={cat._id}>{cat.name}</option>
           ))}
         </select>
 
-        {/* ✅ Availability Dropdown */}
         <select name="availability" value={form.availability} onChange={handleChange}>
-          {availabilityOptions.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
+          {availabilityOptions.map(opt => <option key={opt}>{opt}</option>)}
         </select>
 
-        <div>
+        <div className="checkboxes">
           <label>Lifestyle:</label>
-          {lifestyleOptions.map((opt) => (
+          {lifestyleOptions.map(opt => (
             <label key={opt}>
-              <input
-                type="checkbox"
-                name="lifestyle"
-                value={opt}
+              <input type="checkbox" name="lifestyle" value={opt}
                 checked={form.lifestyle.includes(opt)}
-                onChange={handleChange}
-              />
-              {opt}
+                onChange={handleChange} /> {opt}
             </label>
           ))}
         </div>
 
-        <button type="submit">Upload Product</button>
+        <input type="file" multiple onChange={handleImageChange} />
+        <div className="preview">
+          {preview.map((src, i) => (
+            <img key={i} src={src} alt="preview" />
+          ))}
+        </div>
+
+        <button type="submit" className="upload-btn">Upload Product</button>
       </form>
     </div>
   );
