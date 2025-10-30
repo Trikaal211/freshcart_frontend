@@ -16,7 +16,7 @@ const initialForm = {
   category: "",
   lifestyle: [],
   deliveryInfo: "",
-  availability: "In Stock", //  Added back
+  availability: "In Stock",
   features: [],
   ingredients: "",
   nutritionalInfo: {
@@ -49,12 +49,15 @@ function ProductUpload() {
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
 
+  // ✅ Fetch categories from backend
   useEffect(() => {
-axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
+    axios
+      .get("https://freshcart-backend-4wrc.onrender.com/categories")
       .then((res) => setCategories(res.data))
-      .catch((err) => console.log(err));
+      .catch((err) => console.log("Error fetching categories:", err));
   }, []);
 
+  // ✅ Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -80,14 +83,22 @@ axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
     }
   };
 
+  // ✅ Handle image upload
   const handleImageChange = (e) => {
     setFiles(Array.from(e.target.files));
   };
 
+  // ✅ Handle form submit (with token)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const token = localStorage.getItem("token"); // 🟢 get logged-in user's token
+      if (!token) {
+        alert("Please login first!");
+        return;
+      }
+
       const formData = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
@@ -102,16 +113,24 @@ axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
         formData.append("images", file);
       });
 
-const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/products", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // ✅ API call with Authorization header
+      const res = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/products",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // ✅ send user token
+          },
+        }
+      );
 
-      alert(" Product uploaded successfully!");
+      alert("Product uploaded successfully!");
       console.log("Response:", res.data);
       setForm(initialForm);
       setFiles([]);
     } catch (err) {
-      console.error(" Error uploading product:", err);
+      console.error("Error uploading product:", err);
       alert("Error uploading product");
     }
   };
@@ -130,7 +149,7 @@ const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/produc
         <input type="number" name="discountPrice" placeholder="Discount Price" value={form.discountPrice} onChange={handleChange} />
         <input type="number" name="quantity" placeholder="Quantity" value={form.quantity} onChange={handleChange} />
 
-<input type="file" name="photos" multiple onChange={handleImageChange} />
+        <input type="file" name="photos" multiple onChange={handleImageChange} />
 
         <select name="category" value={form.category} onChange={handleChange}>
           <option value="">Select Category</option>
