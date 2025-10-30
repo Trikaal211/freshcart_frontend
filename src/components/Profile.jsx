@@ -98,6 +98,7 @@ const Profile = () => {
       await axios.patch(
         `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,
         { status: "shipped" },
+          { withCredentials: true } , 
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
