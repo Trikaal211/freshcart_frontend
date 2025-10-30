@@ -17,13 +17,12 @@ const Profile = () => {
     const fetchData = async () => {
       try {
         if (!token) {
-          console.warn("No token found in localStorage!");
           setError("Please login to view your profile");
           setLoading(false);
           return;
         }
 
-        console.log("🔍 Fetching profile data with token:", token.substring(0, 20) + "...");
+        console.log("🔍 Fetching profile data...");
 
         // Fetch user details first
         try {
@@ -33,51 +32,59 @@ const Profile = () => {
               "Content-Type": "application/json"
             }
           });
-          console.log("✅ User data:", userRes.data);
+          console.log("✅ User data loaded");
           setUser(userRes.data);
         } catch (userError) {
           console.error("❌ Error fetching user:", userError);
           setError("Failed to load user data");
         }
 
-        // Fetch other data in parallel
-        const [cartRes, productsRes, ordersRes] = await Promise.allSettled([
+        // Fetch other data in parallel with better error handling
+        const promises = [
+          // Cart
           axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
             headers: { Authorization: `Bearer ${token}` }
+          }).catch(err => {
+            console.error("Cart fetch error:", err);
+            return { data: { products: [] } }; // Return empty cart on error
           }),
+          
+          // My Products - with fallback
           axios.get("https://freshcart-backend-4wrc.onrender.com/products/my-products", {
             headers: { Authorization: `Bearer ${token}` }
+          }).catch(err => {
+            console.error("My Products fetch error:", err);
+            // If endpoint doesn't exist or fails, return empty array
+            return { data: [] };
           }),
+          
+          // My Orders - with fallback  
           axios.get("https://freshcart-backend-4wrc.onrender.com/orders/my-orders", {
             headers: { Authorization: `Bearer ${token}` }
+          }).catch(err => {
+            console.error("My Orders fetch error:", err);
+            return { data: [] };
           })
-        ]);
+        ];
 
-        // Handle cart response
-        if (cartRes.status === 'fulfilled') {
-          console.log("✅ Cart data:", cartRes.value.data);
-          setCart(cartRes.value.data.products || cartRes.value.data.items || []);
-        } else {
-          console.error("❌ Error fetching cart:", cartRes.reason);
-        }
+        const [cartRes, productsRes, ordersRes] = await Promise.all(promises);
 
-        // Handle products response
-        if (productsRes.status === 'fulfilled') {
-          console.log("✅ Products data:", productsRes.value.data);
-          setMyProducts(productsRes.value.data || []);
+        // Set cart data
+        setCart(cartRes.data.products || cartRes.data.items || []);
+
+        // Set products data
+        if (productsRes.data && Array.isArray(productsRes.data)) {
+          setMyProducts(productsRes.data);
+          console.log(`✅ Loaded ${productsRes.data.length} products`);
         } else {
-          console.error("❌ Error fetching products:", productsRes.reason);
-          // If endpoint doesn't exist, set empty array
           setMyProducts([]);
+          console.log("⚠️ No products data or invalid format");
         }
 
-        // Handle orders response
-        if (ordersRes.status === 'fulfilled') {
-          console.log("✅ Orders data:", ordersRes.value.data);
-          setMyOrders(ordersRes.value.data || []);
+        // Set orders data
+        if (ordersRes.data && Array.isArray(ordersRes.data)) {
+          setMyOrders(ordersRes.data);
         } else {
-          console.error("❌ Error fetching orders:", ordersRes.reason);
-          // If endpoint doesn't exist, set empty array
           setMyOrders([]);
         }
 
@@ -91,6 +98,21 @@ const Profile = () => {
 
     fetchData();
   }, [token]);
+
+  // Refresh my products data
+  const refreshMyProducts = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await axios.get("https://freshcart-backend-4wrc.onrender.com/products/my-products", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMyProducts(response.data || []);
+      console.log("🔄 Products refreshed");
+    } catch (error) {
+      console.error("❌ Error refreshing products:", error);
+    }
+  };
 
   const getOrdersForProduct = (product) => {
     return product.orders || [];
@@ -146,7 +168,12 @@ const Profile = () => {
 
   return (
     <div className="profile-page">
-      <h2>User Profile</h2>
+      <div className="profile-header">
+        <h2>User Profile</h2>
+        <button onClick={refreshMyProducts} className="refresh-btn">
+          🔄 Refresh
+        </button>
+      </div>
 
       {/* Tabs */}
       <div className="profile-tabs">
@@ -208,18 +235,23 @@ const Profile = () => {
               {cart.map((item) => (
                 <div key={item._id} className="cart-item">
                   <div className="item-info">
-                    <h4>{item.productId?.title || "Unknown Product"}</h4>
+                    <h4>{item.productId?.title || item.product?.title || "Unknown Product"}</h4>
                     <p>Quantity: {item.quantity}</p>
-                    <p>Price: ₹{item.productId?.price || "N/A"}</p>
-                    {item.productId?.discountPrice && (
-                      <p className="discount">Discounted: ₹{item.productId.discountPrice}</p>
+                    <p>Price: ₹{item.productId?.price || item.product?.price || "N/A"}</p>
+                    {(item.productId?.discountPrice || item.product?.discountPrice) && (
+                      <p className="discount">
+                        Discounted: ₹{item.productId?.discountPrice || item.product?.discountPrice}
+                      </p>
                     )}
                   </div>
-                  {item.productId?.images?.[0] && (
+                  {(item.productId?.images?.[0] || item.product?.images?.[0]) && (
                     <img 
-                      src={item.productId.images[0]} 
-                      alt={item.productId.title}
+                      src={item.productId?.images?.[0] || item.product?.images?.[0]} 
+                      alt={item.productId?.title || item.product?.title}
                       className="item-image"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/80x80?text=Product";
+                      }}
                     />
                   )}
                 </div>
@@ -286,6 +318,22 @@ const Profile = () => {
       {/* My Products Tab */}
       {activeTab === "products" && (
         <section className="my-products">
+          <div className="section-header">
+            <h3>My Uploaded Products</h3>
+            <div className="header-actions">
+              <button onClick={refreshMyProducts} className="refresh-btn small">
+                🔄 Refresh
+              </button>
+              <button 
+                onClick={() => window.location.href = "/upload-product"}
+                className="upload-btn"
+              >
+                📤 Upload New Product
+              </button>
+            </div>
+          </div>
+
+          {/* Sales Overview */}
           <div className="sales-summary">
             <h3>Sales Overview</h3>
             <div className="stats">
@@ -300,62 +348,108 @@ const Profile = () => {
               </div>
             </div>
           </div>
-
-          <h3>My Uploaded Products ({myProducts.length})</h3>
           
           {myProducts.length > 0 ? (
             <div className="products-list">
-              {myProducts.map((product) => (
-                <div key={product._id} className="product-card">
-                  <div className="product-header">
-                    <h4>{product.title}</h4>
-                    <div className="product-pricing">
-                      <span className="price">₹{product.price}</span>
-                      {product.discountPrice && (
-                        <span className="discount-price">₹{product.discountPrice}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="product-stats">
-                    <p><strong>Orders Received:</strong> {getOrdersForProduct(product).length}</p>
-                    <p><strong>In Stock:</strong> {product.quantity || 0}</p>
-                    <p><strong>Status:</strong> {product.availability || "In Stock"}</p>
-                  </div>
-                  
-                  {getOrdersForProduct(product).length > 0 && (
-                    <div className="orders-list">
-                      <h5>Order Details:</h5>
-                      <div className="order-items-container">
-                        {getOrdersForProduct(product).map((order, index) => (
-                          <div key={index} className="order-item">
-                            <div className="order-info">
-                              <strong>Order #{index + 1}</strong>
-                              <p><strong>Quantity:</strong> {order.quantity}</p>
-                              <p><strong>Amount:</strong> ₹{(order.orderPrice || product.price || 0) * (order.quantity || 1)}</p>
-                              <p><strong>Status:</strong> {order.status || "pending"}</p>
-                              <p><strong>Order Date:</strong> {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : "N/A"}</p>
-                            </div>
-                          </div>
-                        ))}
+              {myProducts.map((product) => {
+                const productOrders = getOrdersForProduct(product);
+                
+                return (
+                  <div key={product._id} className="product-card">
+                    <div className="product-header">
+                      <div className="product-title">
+                        <h4>{product.title}</h4>
+                        {product.images?.[0] && (
+                          <img 
+                            src={product.images[0]} 
+                            alt={product.title}
+                            className="product-thumbnail"
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/60x60?text=Product";
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className="product-pricing">
+                        <span className="price">₹{product.price}</span>
+                        {product.discountPrice && product.discountPrice < product.price && (
+                          <span className="discount-price">₹{product.discountPrice}</span>
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {getOrdersForProduct(product).length === 0 && (
-                    <div className="no-orders">
-                      <p>No orders received yet for this product.</p>
+                    
+                    <div className="product-meta">
+                      <p><strong>Brand:</strong> {product.brand || "N/A"}</p>
+                      <p><strong>Category:</strong> {product.category?.name || "Uncategorized"}</p>
+                      <p><strong>Status:</strong> 
+                        <span className={`availability ${product.availability?.toLowerCase() || "in-stock"}`}>
+                          {product.availability || "In Stock"}
+                        </span>
+                      </p>
                     </div>
-                  )}
-                </div>
-              ))}
+                    
+                    <div className="product-stats">
+                      <div className="stat-item">
+                        <strong>Stock:</strong> {product.quantity || 0}
+                      </div>
+                      <div className="stat-item">
+                        <strong>Orders:</strong> {productOrders.length}
+                      </div>
+                      <div className="stat-item">
+                        <strong>Clicks:</strong> {product.clicks || 0}
+                      </div>
+                    </div>
+                    
+                    {productOrders.length > 0 ? (
+                      <div className="product-orders">
+                        <h5>📦 Orders Received ({productOrders.length})</h5>
+                        <div className="orders-container">
+                          {productOrders.map((order, index) => (
+                            <div key={index} className="order-detail">
+                              <div className="order-meta">
+                                <strong>Order #{index + 1}</strong>
+                                <span className={`order-status ${order.status || "pending"}`}>
+                                  {order.status || "pending"}
+                                </span>
+                              </div>
+                              <div className="order-info">
+                                <p><strong>Quantity:</strong> {order.quantity}</p>
+                                <p><strong>Price:</strong> ₹{order.orderPrice || product.price}</p>
+                                <p><strong>Total:</strong> ₹{(order.orderPrice || product.price) * order.quantity}</p>
+                                <p><strong>Date:</strong> {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : "N/A"}</p>
+                                {order.user && (
+                                  <p><strong>Customer:</strong> {order.user.name || order.user.email}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="no-orders">
+                        <p>📭 No orders received yet for this product.</p>
+                        <p className="hint">When customers order this product, details will appear here.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="empty-state">
-              <p>You haven't uploaded any products yet.</p>
-              <button onClick={() => window.location.href = "/upload-product"}>
-                Upload Your First Product
-              </button>
+              <div className="empty-content">
+                <h4>📤 No Products Uploaded Yet</h4>
+                <p>You haven't uploaded any products to sell.</p>
+                <button 
+                  onClick={() => window.location.href = "/upload-product"}
+                  className="cta-button"
+                >
+                  Upload Your First Product
+                </button>
+                <p className="hint">
+                  Start selling by uploading your products. You'll see orders from customers here.
+                </p>
+              </div>
             </div>
           )}
         </section>
