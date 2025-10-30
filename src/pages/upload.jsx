@@ -93,7 +93,7 @@ function ProductUpload() {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token"); // 🟢 get logged-in user's token
+const token = localStorage.getItem("accessToken");
       if (!token) {
         alert("Please login first!");
         return;
