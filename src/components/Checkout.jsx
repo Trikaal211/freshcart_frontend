@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./checkout.css";
 
 export default function Checkout() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Get data from navigation state
   const { selectedAddress, type, cartItems: navCartItems } = location.state || {};
@@ -33,12 +35,14 @@ export default function Checkout() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currency = (v) => `$${v.toFixed(2)}`;
+  const token = localStorage.getItem("accessToken");
+
+  const currency = (v) => `₹${v.toFixed(2)}`;
 
   // Fetch cart items function
   const fetchCartItems = async () => {
-    const token = localStorage.getItem("accessToken");
     if (!token) {
       setLoading(false);
       return;
@@ -46,24 +50,21 @@ export default function Checkout() {
 
     try {
       setLoading(true);
-const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
+      const res = await axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
         headers: { 
-          "Content-Type": "application/json", 
           Authorization: `Bearer ${token}` 
-        },
-        credentials: "include"
+        }
       });
       
-      if (!res.ok) throw new Error("Failed to fetch cart");
-      const data = await res.json();
-      setCartItems(data.products || []);
+      const cartData = res.data;
+      setCartItems(cartData.products || []);
       
       // Calculate totals directly here
       let calculatedSubtotal = 0;
       let calculatedSaving = 0;
       let itemCount = 0;
 
-      (data.products || []).forEach(item => {
+      (cartData.products || []).forEach(item => {
         const product = item.productId;
         if (product) {
           const actualPrice = product.discountPrice || product.price;
@@ -118,30 +119,116 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
     } else {
       fetchCartItems();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navCartItems]);
 
-  const handleConfirm = (e) => {
+  // ✅ NEW: Handle order creation and integration with product uploaders
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
     
-    if (!phone) return setError("Please enter a phone number.");
-    if (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvc))
-      return setError("Please fill card details.");
-    if (!ageConfirmed) return setError("Please confirm your age.");
-    if (cartItems.length === 0) return setError("Your cart is empty.");
-    
-    setConfirmed(true);
-    
-    // Here you would typically send order to backend
-    console.log("Order confirmed:", {
-      items: cartItems,
-      address: pickupLocation,
-      phone,
-      delivery: `${deliveryDay} · ${deliverySlot}`,
-      paymentMethod,
-      total: subtotal + saving + deliveryCost
-    });
+    // Validation
+    if (!phone) {
+      setError("Please enter a phone number.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvc)) {
+      setError("Please fill card details.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!ageConfirmed) {
+      setError("Please confirm your age.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (cartItems.length === 0) {
+      setError("Your cart is empty.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // ✅ Prepare order items for backend
+      const orderItems = cartItems.map(item => ({
+        productId: item.productId._id || item.productId,
+        quantity: item.quantity,
+        price: item.productId.discountPrice || item.productId.price
+      }));
+
+      const totalAmount = subtotal + saving + deliveryCost;
+
+      // ✅ Create order in backend
+      const orderResponse = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/orders",
+        { 
+          address: pickupLocation,
+          items: orderItems,
+          phone: phone,
+          deliveryTime: `${deliveryDay} · ${deliverySlot}`,
+          paymentMethod: paymentMethod,
+          totalAmount: totalAmount,
+          orderNote: orderNote,
+          packaging: packaging
+        },
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("✅ Order created:", orderResponse.data);
+
+      // ✅ Clear cart after successful order
+      await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // ✅ Update each product with order information for the uploaders
+      for (const item of cartItems) {
+        const productId = item.productId._id || item.productId;
+        
+        try {
+          await axios.post(
+            `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
+            {
+              quantity: item.quantity,
+              orderPrice: item.productId.discountPrice || item.productId.price,
+              orderId: orderResponse.data.order._id // Assuming the response has order ID
+            },
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              }
+            }
+          );
+          console.log(`✅ Order added to product ${productId}`);
+        } catch (productErr) {
+          console.error(`❌ Error updating product ${productId}:`, productErr);
+          // Continue with other products even if one fails
+        }
+      }
+
+      // ✅ Show success and redirect
+      setConfirmed(true);
+      setError("");
+      
+      // Redirect to orders page after 2 seconds
+      setTimeout(() => {
+        navigate("/profile");
+      }, 2000);
+
+    } catch (err) {
+      console.error("❌ Error placing order:", err);
+      const errorMessage = err.response?.data?.error || "Something went wrong during checkout!";
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -191,7 +278,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
                 <span className="inline-label">Phone number *</span>
                 <input
                   className="input small"
-                  placeholder="+1 — — — —"
+                  placeholder="+91 — — — —"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
@@ -345,12 +432,18 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
 
             {/* Error + Confirmation */}
             {error && <div className="error">{error}</div>}
-            <button className="confirm-btn" disabled={cartItems.length === 0}>
-              Confirm the order →
+            <button 
+              className="confirm-btn" 
+              disabled={cartItems.length === 0 || isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "Placing Order..." : "Confirm the order →"}
             </button>
             {confirmed && (
               <div className="confirmation">
-                Order confirmed! {type === "delivery" ? "Delivery" : "Pickup"} {deliveryDay} · {deliverySlot}
+                ✅ Order confirmed! {type === "delivery" ? "Delivery" : "Pickup"} {deliveryDay} · {deliverySlot}
+                <br />
+                <small>Redirecting to your profile...</small>
               </div>
             )}
           </form>
@@ -372,11 +465,18 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
                 
                 return (
                   <div key={item._id} className="checkout-cart-item">
-                    <img src={product.images?.[0] || "/fallback.png"} alt={product.title} />
+                    <img 
+                      src={product.images?.[0] || "/fallback.png"} 
+                      alt={product.title} 
+                      onError={(e) => {
+                        e.target.src = "/fallback.png";
+                      }}
+                    />
                     <div className="item-details">
                       <h4>{product.title}</h4>
                       <p>Qty: {item.quantity}</p>
                       <p>Price: {currency(total)}</p>
+                      <small>Seller: {product.uploadedBy?.name || "FreshCart"}</small>
                     </div>
                   </div>
                 );
