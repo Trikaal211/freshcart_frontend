@@ -98,17 +98,16 @@ function ProductUpload() {
       });
 
       files.forEach(file => formData.append("images", file));
- console.log(formData);
+ 
       const res = await axios.post(
        
         
         "https://freshcart-backend-4wrc.onrender.com/products",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+         headers: {
+  Authorization: `Bearer ${token}`,
+},
         }
         
       );
