@@ -84,45 +84,88 @@ function ProductUpload() {
   };
 
   // Submit product
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return alert("⚠️ Please login first");
-
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (typeof value === "object") formData.append(key, JSON.stringify(value));
-        else formData.append(key, value);
-      });
-
-      files.forEach(file => formData.append("images", file));
- 
-      const res = await axios.post(
-       
-        
-        "https://freshcart-backend-4wrc.onrender.com/products",
-        formData,
-        {
-         headers: {
-  Authorization: `Bearer ${token}`,
-},
-        }
-        
-      );
-      
-
-      alert("✅ Product uploaded successfully!");
-      console.log("Response:", res.data);
-      setForm(initialForm);
-      setFiles([]);
-      setPreview([]);
-    } catch (err) {
-      console.error("❌ Upload error:", err);
-      alert(err.response?.data?.error || "Upload failed. Check console.");
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      alert("⚠️ Please login first");
+      return;
     }
-  };
+
+    // ✅ Create FormData properly
+    const formData = new FormData();
+    
+    // ✅ Append simple fields
+    formData.append("title", form.title);
+    formData.append("slug", form.slug);
+    formData.append("brand", form.brand);
+    formData.append("description", form.description);
+    formData.append("price", form.price);
+    formData.append("discountPrice", form.discountPrice || "");
+    formData.append("quantity", form.quantity);
+    formData.append("weight", form.weight || "");
+    formData.append("category", form.category);
+    formData.append("availability", form.availability);
+    formData.append("deliveryInfo", form.deliveryInfo || "");
+    formData.append("ingredients", form.ingredients || "");
+    formData.append("metaTitle", form.metaTitle || "");
+    formData.append("metaDescription", form.metaDescription || "");
+
+    // ✅ Append array/object fields as JSON strings
+    if (form.lifestyle && form.lifestyle.length > 0) {
+      formData.append("lifestyle", JSON.stringify(form.lifestyle));
+    }
+    
+    if (form.tags) {
+      formData.append("tags", JSON.stringify(form.tags.split(',').map(tag => tag.trim())));
+    }
+    
+    if (form.nutritionalInfo) {
+      formData.append("nutritionalInfo", JSON.stringify(form.nutritionalInfo));
+    }
+    
+    if (form.shipping) {
+      formData.append("shipping", JSON.stringify(form.shipping));
+    }
+    
+    if (form.features) {
+      formData.append("features", JSON.stringify(form.features.split(',').map(feature => feature.trim())));
+    }
+
+    // ✅ Append files
+    files.forEach(file => {
+      formData.append("images", file);
+    });
+
+    console.log("📦 Sending form data...");
+    
+    const res = await axios.post(
+      "https://freshcart-backend-4wrc.onrender.com/products",
+      formData,
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    alert("✅ Product uploaded successfully!");
+    console.log("Response:", res.data);
+    
+    // Reset form
+    setForm(initialForm);
+    setFiles([]);
+    setPreview([]);
+    
+  } catch (err) {
+    console.error("❌ Upload error:", err);
+    console.error("Error response:", err.response?.data);
+    alert(err.response?.data?.message || "Upload failed. Check console for details.");
+  }
+};
 
   return (
     <div className="upload-wrapper">
