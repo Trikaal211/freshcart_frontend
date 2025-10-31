@@ -163,7 +163,7 @@ function ProductUpload() {
           ))}
         </div>
 
-        <input type="file" multiple onChange={handleImageChange} />
+<input type="file" multiple onChange={handleImageChange} name="images" />
         <div className="preview">
           {preview.map((src, i) => (
             <img key={i} src={src} alt="preview" />
