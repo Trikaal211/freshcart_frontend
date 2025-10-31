@@ -43,61 +43,73 @@ function ProductUpload() {
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch categories
+  // ✅ Fetch categories
   useEffect(() => {
-    axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
-      .then(res => setCategories(res.data))
-      .catch(err => console.error("❌ Category fetch error:", err));
+    axios
+      .get("https://freshcart-backend-4wrc.onrender.com/categories")
+      .then((res) => setCategories(res.data))
+      .catch((err) => console.error("❌ Category fetch error:", err));
   }, []);
 
-  // Handle input
+  // ✅ Handle input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (name.includes("nutritionalInfo.")) {
       const key = name.split(".")[1];
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
         nutritionalInfo: { ...prev.nutritionalInfo, [key]: value },
       }));
     } else if (name.includes("shipping.")) {
       const key = name.split(".")[1];
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
         shipping: { ...prev.shipping, [key]: type === "checkbox" ? checked : value },
       }));
     } else if (type === "checkbox" && name === "lifestyle") {
       let updated = [...form.lifestyle];
-      checked ? updated.push(value) : updated = updated.filter(item => item !== value);
-      setForm(prev => ({ ...prev, lifestyle: updated }));
+      checked
+        ? updated.push(value)
+        : (updated = updated.filter((item) => item !== value));
+      setForm((prev) => ({ ...prev, lifestyle: updated }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Handle images
+  // ✅ Handle images
   const handleImageChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles(selectedFiles);
-    setPreview(selectedFiles.map(f => URL.createObjectURL(f)));
+    setPreview(selectedFiles.map((f) => URL.createObjectURL(f)));
   };
 
-  // Submit product
+  // ✅ Submit product
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return alert("⚠️ Please login first");
+      if (!token) {
+        alert("⚠️ Please login first");
+        setLoading(false);
+        return;
+      }
 
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (typeof value === "object") formData.append(key, JSON.stringify(value));
-        else formData.append(key, value);
-      });
+      for (const key in form) {
+        if (typeof form[key] === "object") {
+          formData.append(key, JSON.stringify(form[key]));
+        } else {
+          formData.append(key, form[key]);
+        }
+      }
 
-      files.forEach(file => formData.append("images", file));
+      files.forEach((file) => formData.append("images", file));
 
       const res = await axios.post(
         "https://freshcart-backend-4wrc.onrender.com/products",
@@ -116,8 +128,10 @@ function ProductUpload() {
       setFiles([]);
       setPreview([]);
     } catch (err) {
-      console.error("❌ Upload error:", err);
+      console.error("❌ Upload error:", err.response?.data || err);
       alert(err.response?.data?.error || "Upload failed. Check console.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -140,22 +154,31 @@ function ProductUpload() {
 
         <select name="category" value={form.category} onChange={handleChange} required>
           <option value="">Select Category</option>
-          {categories.map(cat => (
-            <option key={cat._id} value={cat._id}>{cat.name}</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
           ))}
         </select>
 
         <select name="availability" value={form.availability} onChange={handleChange}>
-          {availabilityOptions.map(opt => <option key={opt}>{opt}</option>)}
+          {availabilityOptions.map((opt) => (
+            <option key={opt}>{opt}</option>
+          ))}
         </select>
 
         <div className="checkboxes">
           <label>Lifestyle:</label>
-          {lifestyleOptions.map(opt => (
+          {lifestyleOptions.map((opt) => (
             <label key={opt}>
-              <input type="checkbox" name="lifestyle" value={opt}
+              <input
+                type="checkbox"
+                name="lifestyle"
+                value={opt}
                 checked={form.lifestyle.includes(opt)}
-                onChange={handleChange} /> {opt}
+                onChange={handleChange}
+              />{" "}
+              {opt}
             </label>
           ))}
         </div>
@@ -167,7 +190,9 @@ function ProductUpload() {
           ))}
         </div>
 
-        <button type="submit" className="upload-btn">Upload Product</button>
+        <button type="submit" className="upload-btn" disabled={loading}>
+          {loading ? "Uploading..." : "Upload Product"}
+        </button>
       </form>
     </div>
   );
