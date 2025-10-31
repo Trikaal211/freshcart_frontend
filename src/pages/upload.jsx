@@ -98,8 +98,10 @@ function ProductUpload() {
       });
 
       files.forEach(file => formData.append("images", file));
-
+ console.log(formData);
       const res = await axios.post(
+       
+        
         "https://freshcart-backend-4wrc.onrender.com/products",
         formData,
         {
@@ -108,7 +110,9 @@ function ProductUpload() {
             Authorization: `Bearer ${token}`,
           },
         }
+        
       );
+      
 
       alert("✅ Product uploaded successfully!");
       console.log("Response:", res.data);
