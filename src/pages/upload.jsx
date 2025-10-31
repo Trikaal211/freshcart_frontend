@@ -84,7 +84,7 @@ function ProductUpload() {
   };
 
   // Submit product
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
@@ -94,66 +94,75 @@ function ProductUpload() {
       return;
     }
 
-    // ✅ Create FormData properly
+    console.log("Starting upload process...");
+
+    // Create FormData
     const formData = new FormData();
     
-    // ✅ Append simple fields
-    formData.append("title", form.title);
-    formData.append("slug", form.slug);
-    formData.append("brand", form.brand);
-    formData.append("description", form.description);
-    formData.append("price", form.price);
-    formData.append("discountPrice", form.discountPrice || "");
-    formData.append("quantity", form.quantity);
-    formData.append("weight", form.weight || "");
-    formData.append("category", form.category);
-    formData.append("availability", form.availability);
-    formData.append("deliveryInfo", form.deliveryInfo || "");
-    formData.append("ingredients", form.ingredients || "");
-    formData.append("metaTitle", form.metaTitle || "");
-    formData.append("metaDescription", form.metaDescription || "");
+    // Append basic fields
+    const basicFields = [
+      'title', 'slug', 'brand', 'description', 'price', 'discountPrice',
+      'quantity', 'weight', 'category', 'availability', 'deliveryInfo',
+      'ingredients', 'metaTitle', 'metaDescription'
+    ];
 
-    // ✅ Append array/object fields as JSON strings
-    if (form.lifestyle && form.lifestyle.length > 0) {
-      formData.append("lifestyle", JSON.stringify(form.lifestyle));
-    }
-    
-    if (form.tags) {
-      formData.append("tags", JSON.stringify(form.tags.split(',').map(tag => tag.trim())));
-    }
-    
-    if (form.nutritionalInfo) {
-      formData.append("nutritionalInfo", JSON.stringify(form.nutritionalInfo));
-    }
-    
-    if (form.shipping) {
-      formData.append("shipping", JSON.stringify(form.shipping));
-    }
-    
-    if (form.features) {
-      formData.append("features", JSON.stringify(form.features.split(',').map(feature => feature.trim())));
-    }
-
-    // ✅ Append files
-    files.forEach(file => {
-      formData.append("images", file);
+    basicFields.forEach(field => {
+      if (form[field] !== undefined && form[field] !== '') {
+        formData.append(field, form[field].toString());
+      }
     });
 
-    console.log("📦 Sending form data...");
-    
-    const res = await axios.post(
+    // Append JSON fields
+    if (form.lifestyle.length > 0) {
+      formData.append('lifestyle', JSON.stringify(form.lifestyle));
+    }
+
+    if (form.tags) {
+      const tagsArray = form.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      formData.append('tags', JSON.stringify(tagsArray));
+    }
+
+    if (form.features) {
+      const featuresArray = form.features.split(',').map(feature => feature.trim()).filter(feature => feature);
+      formData.append('features', JSON.stringify(featuresArray));
+    }
+
+    formData.append('nutritionalInfo', JSON.stringify(form.nutritionalInfo));
+    formData.append('shipping', JSON.stringify(form.shipping));
+
+    // Append files
+    if (files.length > 0) {
+      files.forEach(file => {
+        formData.append('images', file);
+      });
+    } else {
+      console.log("No images selected");
+    }
+
+    console.log("Sending request to server...");
+
+    const response = await fetch(
       "https://freshcart-backend-4wrc.onrender.com/products",
-      formData,
       {
+        method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+          // Don't set Content-Type for FormData - let browser set it with boundary
         },
+        body: formData,
       }
     );
 
+    console.log("Response status:", response.status);
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    }
+
     alert("✅ Product uploaded successfully!");
-    console.log("Response:", res.data);
+    console.log("Success response:", data);
     
     // Reset form
     setForm(initialForm);
@@ -161,9 +170,14 @@ function ProductUpload() {
     setPreview([]);
     
   } catch (err) {
-    console.error("❌ Upload error:", err);
-    console.error("Error response:", err.response?.data);
-    alert(err.response?.data?.message || "Upload failed. Check console for details.");
+    console.error("❌ UPLOAD ERROR DETAILS:", err);
+    
+    if (err.message.includes('JSON')) {
+      console.error('JSON parsing error - likely HTML response from server');
+      alert('Server error: Please check server logs and try again');
+    } else {
+      alert(err.message || "Upload failed. Check console for details.");
+    }
   }
 };
 
