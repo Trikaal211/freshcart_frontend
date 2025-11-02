@@ -1,172 +1,107 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import "./upload.css";
 
-const initialForm = {
-  title: "",
-  slug: "",
-  brand: "",
-  subtitle: "",
-  description: "",
-  price: "",
-  discountPrice: "",
-  quantity: 1,
-  weight: "",
-  category: "",
-  lifestyle: [],
-  deliveryInfo: "",
-  availability: "In Stock",
-  features: "",
-  ingredients: "",
-  nutritionalInfo: {
-    calories: "",
-    protein: "",
-    carbs: "",
-    fat: "",
-  },
-  tags: "",
-  shipping: {
-    freeShipping: false,
-    shippingTime: "",
-  },
-  metaTitle: "",
-  metaDescription: "",
-};
+const Upload = () => {
+  const [form, setForm] = useState({
+    title: "",
+    slug: "",
+    brand: "",
+    subtitle: "",
+    description: "",
+    price: "",
+    discountPrice: "",
+    quantity: "",
+    weight: "",
+    category: "",
+    lifestyle: "",
+    deliveryInfo: "",
+    uploadedBy: "", // required
+  });
 
-const lifestyleOptions = [
-  "Gluten Free", "Vegan", "Keto", "Plant-based", "Sugar Free", "Nut Free"
-];
-const availabilityOptions = ["In Stock", "Out of Stock", "Pre-order"];
+  const [images, setImages] = useState([]);
 
-function ProductUpload() {
-  const [form, setForm] = useState(initialForm);
-  const [categories, setCategories] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [preview, setPreview] = useState([]);
-
-  // Fetch categories
-  useEffect(() => {
-    axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
-      .then(res => setCategories(res.data))
-      .catch(err => console.error("❌ Category fetch error:", err));
-  }, []);
-
-  // Handle input
+  // 🟢 Handle input
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (name.includes("nutritionalInfo.")) {
-      const key = name.split(".")[1];
-      setForm(prev => ({
-        ...prev,
-        nutritionalInfo: { ...prev.nutritionalInfo, [key]: value },
-      }));
-    } else if (name.includes("shipping.")) {
-      const key = name.split(".")[1];
-      setForm(prev => ({
-        ...prev,
-        shipping: { ...prev.shipping, [key]: type === "checkbox" ? checked : value },
-      }));
-    } else if (type === "checkbox" && name === "lifestyle") {
-      let updated = [...form.lifestyle];
-      checked ? updated.push(value) : updated = updated.filter(item => item !== value);
-      setForm(prev => ({ ...prev, lifestyle: updated }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle images
-  const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles(selectedFiles);
-    setPreview(selectedFiles.map(f => URL.createObjectURL(f)));
+  // 🟢 Handle image files
+  const handleFileChange = (e) => {
+    setImages([...e.target.files]);
   };
 
-  // Submit product
+  // 🟢 Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return alert("⚠️ Please login first");
-
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (typeof value === "object") formData.append(key, JSON.stringify(value));
-        else formData.append(key, value);
+
+      // Append required fields
+      formData.append("title", form.title);
+      formData.append("slug", form.slug);
+      formData.append("brand", form.brand);
+      formData.append("description", form.description);
+      formData.append("price", form.price);
+      formData.append("category", form.category);
+      formData.append("uploadedBy", form.uploadedBy);
+
+      // Optional fields
+      if (form.subtitle) formData.append("subtitle", form.subtitle);
+      if (form.discountPrice) formData.append("discountPrice", form.discountPrice);
+      if (form.quantity) formData.append("quantity", form.quantity);
+      if (form.weight) formData.append("weight", form.weight);
+      if (form.lifestyle) formData.append("lifestyle", form.lifestyle);
+      if (form.deliveryInfo) formData.append("deliveryInfo", form.deliveryInfo);
+
+      // Append multiple images
+      images.forEach((img) => {
+        formData.append("images", img);
       });
 
-      files.forEach(file => formData.append("images", file));
-
-      const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/products", formData, {
-  withCredentials: true, // 🔥 zaruri
-  headers: {
-    Authorization: `Bearer ${token}`, // agar tum JWT bhej rahe ho
-  }
-});
+      const res = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/products",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
 
       alert("✅ Product uploaded successfully!");
       console.log("Response:", res.data);
-      setForm(initialForm);
-      setFiles([]);
-      setPreview([]);
-    } catch (err) {
-      console.error("❌ Upload error:", err);
-      alert(err.response?.data?.error || "Upload failed. Check console.");
+    } catch (error) {
+      console.error("❌ Upload error:", error.response?.data || error.message);
+      alert("Error uploading product!");
     }
   };
 
   return (
-    <div className="upload-wrapper">
-      <h2>🛍️ Upload New Product</h2>
+    <div className="upload-container">
+      <h2>Upload Product</h2>
+      <form onSubmit={handleSubmit} className="upload-form">
+        <input type="text" name="title" placeholder="Title" onChange={handleChange} required />
+        <input type="text" name="slug" placeholder="Slug" onChange={handleChange} required />
+        <input type="text" name="brand" placeholder="Brand" onChange={handleChange} required />
+        <textarea name="description" placeholder="Description" onChange={handleChange} required />
+        <input type="number" name="price" placeholder="Price" onChange={handleChange} required />
+        <input type="text" name="category" placeholder="Category ID" onChange={handleChange} required />
+        <input type="text" name="uploadedBy" placeholder="User ID (uploadedBy)" onChange={handleChange} required />
 
-      <form className="upload-form" onSubmit={handleSubmit}>
-        <input type="text" name="title" placeholder="Product Title" value={form.title} onChange={handleChange} required />
-        <input type="text" name="slug" placeholder="Slug" value={form.slug} onChange={handleChange} required />
-        <input type="text" name="brand" placeholder="Brand" value={form.brand} onChange={handleChange} />
-        <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} />
+        <input type="text" name="subtitle" placeholder="Subtitle" onChange={handleChange} />
+        <input type="number" name="discountPrice" placeholder="Discount Price" onChange={handleChange} />
+        <input type="number" name="quantity" placeholder="Quantity" onChange={handleChange} />
+        <input type="text" name="weight" placeholder="Weight" onChange={handleChange} />
+        <input type="text" name="lifestyle" placeholder="Lifestyle" onChange={handleChange} />
+        <input type="text" name="deliveryInfo" placeholder="Delivery Info" onChange={handleChange} />
 
-        <div className="grid-2">
-          <input type="number" name="price" min="0" placeholder="Price" value={form.price} onChange={handleChange} required />
-          <input type="number" name="discountPrice" min="0" placeholder="Discount Price" value={form.discountPrice} onChange={handleChange} />
-        </div>
+        <input type="file" multiple onChange={handleFileChange} />
 
-        <input type="number" name="quantity" min="1" placeholder="Quantity" value={form.quantity} onChange={handleChange} />
-
-        <select name="category" value={form.category} onChange={handleChange} required>
-          <option value="">Select Category</option>
-          {categories.map(cat => (
-            <option key={cat._id} value={cat._id}>{cat.name}</option>
-          ))}
-        </select>
-
-        <select name="availability" value={form.availability} onChange={handleChange}>
-          {availabilityOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
-
-        <div className="checkboxes">
-          <label>Lifestyle:</label>
-          {lifestyleOptions.map(opt => (
-            <label key={opt}>
-              <input type="checkbox" name="lifestyle" value={opt}
-                checked={form.lifestyle.includes(opt)}
-                onChange={handleChange} /> {opt}
-            </label>
-          ))}
-        </div>
-
-        <input type="file" multiple onChange={handleImageChange} />
-        <div className="preview">
-          {preview.map((src, i) => (
-            <img key={i} src={src} alt="preview" />
-          ))}
-        </div>
-
-        <button type="submit" className="upload-btn">Upload Product</button>
+        <button type="submit">Upload Product</button>
       </form>
     </div>
   );
-}
+};
 
-export default ProductUpload;
+export default Upload;
