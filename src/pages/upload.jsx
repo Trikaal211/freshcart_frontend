@@ -99,16 +99,12 @@ function ProductUpload() {
 
       files.forEach(file => formData.append("images", file));
 
-      const res = await axios.post(
-        "https://freshcart-backend-4wrc.onrender.com/products",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/products", formData, {
+  withCredentials: true, // 🔥 zaruri
+  headers: {
+    Authorization: `Bearer ${token}`, // agar tum JWT bhej rahe ho
+  }
+});
 
       alert("✅ Product uploaded successfully!");
       console.log("Response:", res.data);
