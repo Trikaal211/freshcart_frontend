@@ -48,7 +48,7 @@ function ProductUpload() {
   useEffect(() => {
     axios.get("https://freshcart-backend-4wrc.onrender.com/categories")
       .then(res => setCategories(res.data))
-      .catch(err => console.error("❌ Category fetch error:", err));
+      .catch(err => console.error(" Category fetch error:", err));
   }, []);
 
   // Handle input
@@ -89,7 +89,7 @@ function ProductUpload() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return alert("⚠️ Please login first");
+      if (!token) return alert(" Please login first");
 
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
@@ -112,20 +112,20 @@ function ProductUpload() {
 );
 
 
-      alert("✅ Product uploaded successfully!");
+      alert(" Product uploaded successfully!");
       console.log("Response:", res.data);
       setForm(initialForm);
       setFiles([]);
       setPreview([]);
     } catch (err) {
-      console.error("❌ Upload error:", err);
+      console.error(" Upload error:", err);
       alert(err.response?.data?.error || "Upload failed. Check console.");
     }
   };
 
   return (
     <div className="upload-wrapper">
-      <h2>🛍️ Upload New Product</h2>
+      <h2> Upload New Product</h2>
 
       <form className="upload-form" onSubmit={handleSubmit}>
         <input type="text" name="title" placeholder="Product Title" value={form.title} onChange={handleChange} required />
