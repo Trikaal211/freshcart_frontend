@@ -235,7 +235,7 @@ const Profile = () => {
               </div>
               <button
                 className="ship-btn"
-                onClick={() => markAsShipped(order._id)}
+onClick={() => markAsShipped(order.orderId)}
                 disabled={order.status === "shipped"}
               >
                 {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
