@@ -93,31 +93,33 @@ const Profile = () => {
   };
 
   // ✅ Mark order as shipped
-  const markAsShipped = async (orderId) => {
-    try {
-   await axios.patch(
-  `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,
-  { status: "shipped" },
-  {
-    withCredentials: true,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
-      // Update UI instantly
-      setReceivedOrders((prev) =>
-        prev.filter((o) => o._id !== orderId)
-      );
-      setMyOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, status: "shipped" } : o))
-      );
+ // In your Profile component, update the markAsShipped function:
+const markAsShipped = async (orderId) => {
+  try {
+    await axios.patch(
+      `https://freshcart-backend-4wrc.onrender.com/orders/${orderId}/status`,
+      { status: "shipped" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      console.log(" Order marked as shipped");
-    } catch (err) {
-      console.error("Error updating order:", err);
-    }
-  };
+    // Update UI instantly
+    setReceivedOrders((prev) =>
+      prev.map((o) => 
+        o._id === orderId ? { ...o, status: "shipped" } : o
+      )
+    );
+
+    console.log("✅ Order marked as shipped");
+  } catch (err) {
+    console.error("❌ Error updating order:", err);
+    alert("Failed to update order status: " + (err.response?.data?.error || err.message));
+  }
+};
 
   if (loading)
     return <div className="profile-page"><div className="loading">Loading...</div></div>;
@@ -160,7 +162,7 @@ const Profile = () => {
           <p><strong>Role:</strong> {user.role}</p>
         </section>
       )}
-
+      
       {/* My Cart */}
       {activeTab === "cart" && (
         <section>
