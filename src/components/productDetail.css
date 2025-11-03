@@ -242,6 +242,17 @@
     flex-direction: column-reverse;
     align-items: center;
   }
+  .product-images {
+  display: flex;
+  gap: 11px;
+  flex: 2;
+  position: static;
+  top: 50px;
+  align-self: flex-start;
+  height: fit-content;
+  margin-top: 0; /* remove unwanted space */
+  padding-top: 0; /* remove unwanted space */
+}
 
   .thumbnails {
     flex-direction: row;
