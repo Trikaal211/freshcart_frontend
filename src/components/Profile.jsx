@@ -193,68 +193,61 @@ const Profile = () => {
       )}
 
       {/* My Products */}
-      {activeTab === "products" && (
-        <section className="my-products">
-          <div className="section-header">
-            <h3> My Uploaded Products</h3>
-            <button onClick={refreshMyProducts} className="refresh-btn">🔄 Refresh</button>
-          </div>
+    {/* My Products */}
+{activeTab === "products" && (
+  <section className="my-products">
+    <div className="section-header">
+      <h3>🛍️ My Uploaded Products</h3>
+      <button onClick={refreshMyProducts} className="refresh-btn">🔄 Refresh</button>
+    </div>
 
-          {/* Uploaded Products */}
-          <div className="uploaded-products">
-            {myProducts.length === 0 ? (
-              <p>No products uploaded.</p>
-            ) : (
-              myProducts.map((p) => (
-                <div key={p._id} className="product-card">
-                  <img
-                    src={p.images?.[0] || "https://via.placeholder.com/60"}
-                    alt={p.title}
-                    className="thumb"
-                  />
-                  <div>
-                    <h4>{p.title}</h4>
-                    <p>₹{p.price}</p>
-                    <p>Stock: {p.quantity}</p>
-                  </div>
-                </div>
-              ))
-            )}
+    <div className="product-grid">
+      {myProducts.length === 0 ? (
+        <p>No products uploaded.</p>
+      ) : (
+        myProducts.map((p) => (
+          <div key={p._id} className="product-card">
+            <img src={p.images?.[0] || "https://via.placeholder.com/100"} alt={p.title} />
+            <h4>{p.title}</h4>
+            <p>₹{p.price}</p>
+            <p>Stock: {p.quantity}</p>
           </div>
-
-          {/* Received Orders */}
-          <div className="received-orders">
-            <h3>📬 Received Orders ({receivedOrders.length})</h3>
-            {receivedOrders.length === 0 ? (
-              <p>No received orders yet.</p>
-            ) : (
-              receivedOrders.map((order) => (
-                <div key={order._id} className="order-detail-card">
-                  <div className="order-top">
-                    <img
-                      src={order.productImage || "https://via.placeholder.com/50"}
-                      alt={order.productTitle}
-                      className="thumb"
-                    />
-                    <div>
-                      <h4>{order.productTitle}</h4>
-                      <p>Quantity: {order.quantity}</p>
-                      <p>Status: {order.status}</p>
-                    </div>
-                  </div>
-                  <button
-                    className="ship-btn"
-                    onClick={() => markAsShipped(order._id)}
-                    disabled={order.status === "shipped"}
-                  >
-                    {order.status === "shipped" ? "Shipped" : " Mark as Shipped"}
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        ))
       )}
+    </div>
+
+    <div className="received-orders">
+      <h3>📬 Received Orders ({receivedOrders.length})</h3>
+      <div className="order-grid">
+        {receivedOrders.length === 0 ? (
+          <p>No received orders yet.</p>
+        ) : (
+          receivedOrders.map((order) => (
+            <div key={order._id} className="order-card">
+              <img
+                src={order.productImage || "https://via.placeholder.com/80"}
+                alt={order.productTitle}
+              />
+              <div className="order-info">
+                <h4>{order.productTitle}</h4>
+                <p>Qty: {order.quantity}</p>
+                <p>Status: <span className={order.status}>{order.status}</span></p>
+              </div>
+              <button
+                className="ship-btn"
+                onClick={() => markAsShipped(order._id)}
+                disabled={order.status === "shipped"}
+              >
+                {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
     </div>
   );
 };
