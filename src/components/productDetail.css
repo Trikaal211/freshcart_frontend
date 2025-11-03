@@ -260,17 +260,3 @@
     width: 100%;
   }
 }
-@media (max-width: 768px) {
-  .thumbnails {
-    flex-direction: row;
-    justify-content: center;
-    overflow-x: auto;    /*  horizontal scroll allow */
-    gap: 10px;
-  }
-
-  .thumbnails img {
-    width: 70px;
-    height: 70px;
-    flex-shrink: 0;      /*  images ko compress hone se bachao */
-  }
-}
