@@ -60,15 +60,13 @@ const Profile = () => {
         const allOrders = [];
         productsRes.data.forEach((p) => {
           if (p.orders && p.orders.length > 0) {
-          p.orders.forEach((o) =>
-  allOrders.push({
-    ...o.toObject?.() || o,   // mongoose object safety
-    productTitle: p.title,
-    productImage: p.images?.[0],
-    orderId: o.orderId,       // 🟢 यह line जरूरी है
-  })
-);
-
+            p.orders.forEach((o) =>
+              allOrders.push({
+                ...o,
+                productTitle: p.title,
+                productImage: p.images?.[0],
+              })
+            );
           }
         });
         setReceivedOrders(allOrders);
@@ -203,7 +201,7 @@ const Profile = () => {
       <button onClick={refreshMyProducts} className="refresh-btn">🔄 Refresh</button>
     </div>
 
-    <div className="product-grid">                                               
+    <div className="product-grid">
       {myProducts.length === 0 ? (
         <p>No products uploaded.</p>
       ) : (
@@ -237,7 +235,7 @@ const Profile = () => {
               </div>
               <button
                 className="ship-btn"
-               onClick={() => markAsShipped(order.orderId)}
+                onClick={() => markAsShipped(order._id)}
                 disabled={order.status === "shipped"}
               >
                 {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
