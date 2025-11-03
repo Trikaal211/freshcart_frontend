@@ -248,7 +248,7 @@
   flex: 2;
   position: static;
   top: 50px;
-  align-self: flex-start;
+  align-self: center;
   height: fit-content;
   margin-top: 0; /* remove unwanted space */
   padding-top: 0; /* remove unwanted space */
