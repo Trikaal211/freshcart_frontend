@@ -201,7 +201,7 @@ const Profile = () => {
       <button onClick={refreshMyProducts} className="refresh-btn">🔄 Refresh</button>
     </div>
 
-    <div className="product-grid">
+    <div className="product-grid">                                               
       {myProducts.length === 0 ? (
         <p>No products uploaded.</p>
       ) : (
