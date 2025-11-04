@@ -23,8 +23,6 @@ const Profile = () => {
           return;
         }
 
-        console.log("🔄 Fetching profile data...");
-
         // Fetch user
         const userRes = await axios.get(
           "https://freshcart-backend-4wrc.onrender.com/users/me",
@@ -34,32 +32,47 @@ const Profile = () => {
 
         // Fetch all data parallelly
         const [cartRes, productsRes, ordersRes] = await Promise.all([
-          axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: { products: [] } })),
+          axios
+            .get("https://freshcart-backend-4wrc.onrender.com/cart", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .catch(() => ({ data: { products: [] } })),
 
-          axios.get("https://freshcart-backend-4wrc.onrender.com/products/my-products", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch((err) => { 
-            console.error("❌ Error fetching products:", err);
-            return { data: [] };
-          }),
+          axios
+            .get(
+              "https://freshcart-backend-4wrc.onrender.com/products/my-products",
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+            .catch(() => ({ data: [] })),
 
-          axios.get("https://freshcart-backend-4wrc.onrender.com/orders/my-orders", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: [] })),
+          axios
+            .get("https://freshcart-backend-4wrc.onrender.com/orders/my-orders", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .catch(() => ({ data: [] })),
         ]);
 
         setCart(cartRes.data.products || []);
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // ✅ TEMPORARY FIX: Show orders even without orderId
-        const allOrders = extractReceivedOrders(productsRes.data);
-        console.log("📬 Final received orders:", allOrders);
+        // Extract received orders from products
+        const allOrders = [];
+        productsRes.data.forEach((product) => {
+          if (product.orders && product.orders.length > 0) {
+            product.orders.forEach((order) => {
+              allOrders.push({
+                ...order,
+                productId: product._id,
+                productTitle: product.title,
+                productImage: product.images?.[0],
+              });
+            });
+          }
+        });
         setReceivedOrders(allOrders);
       } catch (err) {
-        console.error("❌ Profile fetch error:", err);
+        console.error(err);
         setError("Failed to load profile data");
       } finally {
         setLoading(false);
@@ -68,70 +81,40 @@ const Profile = () => {
     fetchData();
   }, [token]);
 
-  // ✅ TEMPORARY FIX: Extract orders even without orderId
-  const extractReceivedOrders = (products) => {
-    if (!products || !Array.isArray(products)) {
-      return [];
-    }
-
-    const allOrders = [];
-    
-    products.forEach((product) => {
-      if (product.orders && product.orders.length > 0) {
-        product.orders.forEach((order, index) => {
-          // ✅ TEMPORARY: Include orders even without orderId
-          const orderData = {
-            ...order,
-            productId: product._id,
-            productTitle: product.title,
-            productImage: product.images?.[0],
-            buyerName: order.buyerName || "Customer",
-            buyerEmail: order.buyerEmail || "No email",
-            address: order.address || "Address not provided",
-            phone: order.phone || "Phone not provided",
-            // ✅ TEMPORARY: Generate temporary orderId if missing
-            orderId: order.orderId || `temp-order-${product._id}-${index}`,
-            status: order.status || "pending",
-            quantity: order.quantity || 1,
-            orderPrice: order.orderPrice || 0
-          };
-
-          allOrders.push(orderData);
-        });
-      }
-    });
-    
-    return allOrders;
-  };
-
   const refreshMyProducts = async () => {
     try {
       const res = await axios.get(
         "https://freshcart-backend-4wrc.onrender.com/products/my-products",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMyProducts(res.data || []);
+      setMyProducts(res.data);
       
-      const allOrders = extractReceivedOrders(res.data);
+      const allOrders = [];
+      res.data.forEach((product) => {
+        if (product.orders && product.orders.length > 0) {
+          product.orders.forEach((order) => {
+            allOrders.push({
+              ...order,
+              productId: product._id,
+              productTitle: product.title,
+              productImage: product.images?.[0],
+            });
+          });
+        }
+      });
       setReceivedOrders(allOrders);
-      alert("✅ Products refreshed!");
     } catch (err) {
-      console.error("❌ Refresh failed", err);
-      alert("❌ Refresh failed");
+      console.error("Refresh failed", err);
     }
   };
 
-  // Mark order as shipped - with temporary orderId handling
+  // Mark order as shipped
   const markAsShipped = async (order) => {
     try {
-      if (!order.productId) {
-        alert("❌ Error: Product ID not found");
-        return;
-      }
+      console.log("Marking order as shipped:", order);
       
-      // Check if it's a temporary orderId
-      if (order.orderId.toString().startsWith('temp-order-')) {
-        alert("❌ This order has a temporary ID. Please wait for orderId to be properly saved.");
+      if (!order.productId) {
+        alert("Error: Product ID not found for this order");
         return;
       }
 
@@ -146,36 +129,58 @@ const Profile = () => {
         }
       );
 
-      console.log("✅ API Response:", response.data);
+      console.log("Order update response:", response.data);
 
+      // Update UI instantly
       setReceivedOrders((prev) =>
         prev.map((o) => 
           o.orderId === order.orderId ? { ...o, status: "shipped" } : o
         )
       );
 
-      alert("✅ Order marked as shipped successfully!");
+      alert(" Order marked as shipped successfully!");
 
     } catch (err) {
-      console.error("❌ Error updating order:", err);
+      console.error(" Error updating order:", err);
+      console.error("Error details:", err.response?.data);
       alert("Failed to update order status: " + (err.response?.data?.error || err.message));
     }
   };
 
-  // Debug function
+  // Debug function to check orders data
   const debugOrders = () => {
-    console.log("=== 🐛 DEBUG ORDERS ===");
+    console.log("=== DEBUG ORDERS ===");
     console.log("My Products:", myProducts);
     console.log("Received Orders:", receivedOrders);
+    receivedOrders.forEach((order, index) => {
+      console.log(`Order ${index}:`, {
+        orderId: order.orderId,
+        productId: order.productId,
+        status: order.status,
+        productTitle: order.productTitle,
+        buyerName: order.buyerName,
+        address: order.address
+      });
+    });
   };
 
-  if (loading) return <div className="profile-page"><div className="loading">Loading...</div></div>;
-  if (error) return <div className="profile-page"><div className="error-message"><h2>Error</h2><p>{error}</p></div></div>;
+  if (loading)
+    return <div className="profile-page"><div className="loading">Loading...</div></div>;
+  if (error)
+    return (
+      <div className="profile-page">
+        <div className="error-message">
+          <h2>Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
 
   return (
     <div className="profile-page">
       <h2 className="title">👤 Profile</h2>
 
+      {/* Tabs */}
       <div className="profile-tabs">
         {["profile", "cart", "orders", "products"].map((tab) => (
           <button
@@ -191,17 +196,17 @@ const Profile = () => {
         ))}
       </div>
 
-      {/* ✅ FIXED: Profile Info Section - Now using user data */}
-      {activeTab === "profile" && user && (
+      {/* Profile Info */}
+      {activeTab === "profile" && (
         <section className="user-info">
           <h3>Personal Details</h3>
           <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
           <p><strong>Email:</strong> {user.email}</p>
           <p><strong>Role:</strong> {user.role}</p>
-          <p><strong>User ID:</strong> {user._id}</p>
         </section>
       )}
       
+      {/* My Cart */}
       {activeTab === "cart" && (
         <section>
           <h3>🛒 My Cart ({cart.length})</h3>
@@ -214,9 +219,10 @@ const Profile = () => {
         </section>
       )}
 
+      {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3>📦 My Orders ({myOrders.length})</h3>
+          <h3> My Orders ({myOrders.length})</h3>
           {myOrders.length === 0 ? (
             <p>You haven't placed any orders yet.</p>
           ) : (
@@ -232,16 +238,17 @@ const Profile = () => {
         </section>
       )}
 
+      {/* My Products & Received Orders */}
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3>📦 My Uploaded Products ({myProducts.length})</h3>
+            <h3> My Uploaded Products ({myProducts.length})</h3>
             <div>
-              <button onClick={debugOrders} className="debug-btn">
-                🐛 Debug
+              <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
+                 Debug
               </button>
               <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄 Refresh
+                🔄Refresh
               </button>
             </div>
           </div>
@@ -266,12 +273,11 @@ const Profile = () => {
 
           <div className="received-orders">
             <h3>📬 Received Orders ({receivedOrders.length})</h3>
-            
-            {receivedOrders.length === 0 ? (
-              <p>No received orders yet.</p>
-            ) : (
-              <div className="order-grid">
-                {receivedOrders.map((order) => (
+            <div className="order-grid">
+              {receivedOrders.length === 0 ? (
+                <p>No received orders yet.</p>
+              ) : (
+                receivedOrders.map((order) => (
                   <div key={order.orderId} className="order-card received-order">
                     <img
                       src={order.productImage || "https://via.placeholder.com/80"}
@@ -279,34 +285,28 @@ const Profile = () => {
                     />
                     <div className="order-info">
                       <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> 
-                        {order.orderId.toString().startsWith('temp-order-') ? 
-                          <span style={{color: 'orange'}}>🔄 TEMP ID</span> : 
-                          order.orderId.toString().slice(-8)
-                        }
-                      </p>
+                      <p><strong>Order ID:</strong> {order.orderId}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
-                      <p><strong>Price:</strong> ₹{order.orderPrice}</p>
-                      <p><strong>Buyer:</strong> {order.buyerName}</p>
-                      <p><strong>Email:</strong> {order.buyerEmail}</p>
+                      <p><strong>Buyer Name:</strong> {order.buyerName}</p>
+                      <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
                       <p><strong>Phone:</strong> {order.phone}</p>
                       <p><strong>Address:</strong> {order.address}</p>
                       <p><strong>Status:</strong> 
                         <span className={`status ${order.status}`}>{order.status}</span>
                       </p>
+                      <p><strong>Product ID:</strong> {order.productId}</p>
                     </div>
                     <button
                       className="ship-btn"
                       onClick={() => markAsShipped(order)}
-                      disabled={order.status === "shipped" || order.orderId.toString().startsWith('temp-order-')}
-                      title={order.orderId.toString().startsWith('temp-order-') ? "Temporary order ID - cannot update" : ""}
+                      disabled={order.status === "shipped"}
                     >
-                      {order.status === "shipped" ? "✅ Shipped" : "🚚 Mark as Shipped"}
+                      {order.status === "shipped" ? " Shipped" : " Mark as Shipped"}
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
         </section>
       )}
