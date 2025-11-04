@@ -30,8 +30,6 @@ const Profile = () => {
         );
         setUser(userRes.data);
 
-        console.log("👤 User data:", userRes.data);
-
         // Fetch all data parallelly
         const [cartRes, productsRes, ordersRes] = await Promise.all([
           axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
@@ -50,17 +48,13 @@ const Profile = () => {
           }).catch(() => ({ data: [] })),
         ]);
 
-        console.log("🛒 Cart items:", cartRes.data.products?.length || 0);
-        console.log("📦 My products:", productsRes.data.length);
-        console.log("📋 My orders:", ordersRes.data.length);
-
         setCart(cartRes.data.products || []);
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // Extract received orders
+        // Extract received orders with better validation
         const allOrders = extractReceivedOrders(productsRes.data);
-        console.log("📬 Final received orders:", allOrders.length);
+        console.log("📬 Final received orders:", allOrders);
         setReceivedOrders(allOrders);
       } catch (err) {
         console.error("❌ Profile fetch error:", err);
@@ -72,7 +66,7 @@ const Profile = () => {
     fetchData();
   }, [token]);
 
-  // Extract received orders
+  // ✅ FIXED: Better order extraction
   const extractReceivedOrders = (products) => {
     if (!products || !Array.isArray(products)) {
       return [];
@@ -83,20 +77,26 @@ const Profile = () => {
     products.forEach((product) => {
       if (product.orders && product.orders.length > 0) {
         product.orders.forEach((order) => {
-          const orderData = {
-            ...order,
-            productId: product._id,
-            productTitle: product.title,
-            productImage: product.images?.[0],
-            buyerName: order.buyerName || "Unknown Buyer",
-            buyerEmail: order.buyerEmail || "No email",
-            address: order.address || "Address not available",
-            phone: order.phone || "No phone",
-            orderId: order.orderId,
-            status: order.status || "pending"
-          };
+          // ✅ Only include valid orders with orderId
+          if (order.orderId) {
+            const orderData = {
+              ...order,
+              productId: product._id,
+              productTitle: product.title,
+              productImage: product.images?.[0],
+              // Ensure all fields have proper values
+              buyerName: order.buyerName || "Customer",
+              buyerEmail: order.buyerEmail || "No email provided",
+              address: order.address || "Address not provided",
+              phone: order.phone || "Phone not provided",
+              orderId: order.orderId,
+              status: order.status || "pending",
+              quantity: order.quantity || 1,
+              orderPrice: order.orderPrice || 0
+            };
 
-          allOrders.push(orderData);
+            allOrders.push(orderData);
+          }
         });
       }
     });
@@ -106,7 +106,6 @@ const Profile = () => {
 
   const refreshMyProducts = async () => {
     try {
-      console.log("🔄 Refreshing products...");
       const res = await axios.get(
         "https://freshcart-backend-4wrc.onrender.com/products/my-products",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -122,21 +121,15 @@ const Profile = () => {
     }
   };
 
-  // Mark order as shipped
+  // ✅ FIXED: Mark order as shipped - response variable issue fixed
   const markAsShipped = async (order) => {
     try {
-      console.log("🚚 Marking order as shipped:", order);
-      
-      if (!order.productId) {
-        alert("❌ Error: Product ID not found for this order");
-        return;
-      }
-      
-      if (!order.orderId) {
-        alert("❌ Error: Order ID not found for this order");
+      if (!order.productId || !order.orderId) {
+        alert("❌ Error: Missing order data");
         return;
       }
 
+      // ✅ FIXED: Use response for debugging or remove it
       const response = await axios.patch(
         `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
         { status: "shipped" },
@@ -148,7 +141,7 @@ const Profile = () => {
         }
       );
 
-      console.log("✅ Order update response:", response.data);
+      console.log("✅ API Response:", response.data); // ✅ Now response is used
 
       // Update UI instantly
       setReceivedOrders((prev) =>
@@ -170,18 +163,6 @@ const Profile = () => {
     console.log("=== 🐛 DEBUG ORDERS ===");
     console.log("My Products:", myProducts);
     console.log("Received Orders:", receivedOrders);
-    
-    myProducts.forEach((product, index) => {
-      console.log(`Product ${index + 1}:`, {
-        title: product.title,
-        ordersCount: product.orders?.length || 0,
-        orders: product.orders?.map(o => ({
-          orderId: o.orderId,
-          buyerName: o.buyerName,
-          status: o.status
-        }))
-      });
-    });
   };
 
   if (loading) return <div className="profile-page"><div className="loading">Loading...</div></div>;
@@ -280,11 +261,11 @@ const Profile = () => {
           <div className="received-orders">
             <h3>📬 Received Orders ({receivedOrders.length})</h3>
             
-            <div className="order-grid">
-              {receivedOrders.length === 0 ? (
-                <p>No received orders yet.</p>
-              ) : (
-                receivedOrders.map((order) => (
+            {receivedOrders.length === 0 ? (
+              <p>No received orders yet.</p>
+            ) : (
+              <div className="order-grid">
+                {receivedOrders.map((order) => (
                   <div key={order.orderId} className="order-card received-order">
                     <img
                       src={order.productImage || "https://via.placeholder.com/80"}
@@ -292,8 +273,9 @@ const Profile = () => {
                     />
                     <div className="order-info">
                       <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> {order.orderId ? order.orderId.toString().slice(-8) : '❌ MISSING'}</p>
+                      <p><strong>Order ID:</strong> {order.orderId.toString().slice(-8)}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
+                      <p><strong>Price:</strong> ₹{order.orderPrice}</p>
                       <p><strong>Buyer:</strong> {order.buyerName}</p>
                       <p><strong>Email:</strong> {order.buyerEmail}</p>
                       <p><strong>Phone:</strong> {order.phone}</p>
@@ -305,14 +287,14 @@ const Profile = () => {
                     <button
                       className="ship-btn"
                       onClick={() => markAsShipped(order)}
-                      disabled={order.status === "shipped" || !order.orderId}
+                      disabled={order.status === "shipped"}
                     >
                       {order.status === "shipped" ? "✅ Shipped" : "🚚 Mark as Shipped"}
                     </button>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
