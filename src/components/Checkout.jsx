@@ -90,7 +90,7 @@ export default function Checkout() {
           itemCount += quantity;
         }
       });
-
+        
       setSubtotal(calculatedSubtotal);
       setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
       setTotalItems(itemCount);
@@ -101,7 +101,7 @@ export default function Checkout() {
       setLoading(false);
     }
   };
-
+    
   // Calculate cart totals
   useEffect(() => {
     if (navCartItems && navCartItems.length > 0) {
@@ -236,7 +236,7 @@ export default function Checkout() {
             console.warn(" No product ID found for item:", item);
             return;
           }
-
+                            
           await axios.post(
             `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
             {
