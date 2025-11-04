@@ -808,50 +808,119 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products");
           </div>
 
           {/* CART SIDEBAR */}
-          <div className={`cart-side ${cart? "open":""}`}>
-            <div className="cart-header">
-              <h2>Your Cart ({getCartItemsCount()} items)</h2>
-              <button onClick={()=>setOpenCart(false)}>×</button>
-            </div>
-            {loadingCart ? <p>Loading cart...</p> : cartItems.length===0 ? <p>Your cart is empty</p> : (
-              <div className="cart-items">
-                {cartItems.map(item=>{
-                  const product = item.productId; if(!product) return null;
-                  return (
-                    <div key={item._id} className="cart-item">
-                      <img src={product.images?.[0] || "/fallback.png"} alt={product.title}/>
-                      <div className="cart-item-info">
-                        <h4>{product.title}</h4>
-                        <div className="quantity-control">
-                          <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
-                          <span>{item.quantity}</span>
-                          <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
-                        </div>
-                        <p>Qty: {item.quantity}</p>
-                        <p>Total: ${( (product.discountPrice || product.price) * item.quantity ).toFixed(2)}</p>
-                      </div>
-                      <button onClick={()=>handleDelete(item._id)}>delete</button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-            {cartItems.length>0 && (
-              <button className="checkout-btn" onClick={() => {
-                const selectedAddress = activeTab === "delivery" 
-                  ? deliveryAddresses.find(a => a.id === selectedDelivery) 
-                  : pickupAddresses.find(a => a.id === selectedPickup);
+        {/* CART SIDEBAR */}
+<div className={`cart-side ${cart? "open":""}`}>
+  <div className="cart-header">
+    <h2>Your Cart ({getCartItemsCount()} items)</h2>
+    <button onClick={()=>setOpenCart(false)}>×</button>
+  </div>
+  
+  <div className="cart-content">
+    {loadingCart ? (
+      <div className="cart-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your cart...</p>
+      </div>
+    ) : cartItems.length === 0 ? (
+      <div className="empty-cart">
+        <div className="empty-cart-icon">
+          <CiShoppingCart size={48} />
+        </div>
+        <p>Your cart is empty</p>
+        <Link 
+          to="/all-products" 
+          className="continue-shopping"
+          onClick={() => setOpenCart(false)}
+        >
+          Continue Shopping
+        </Link>
+      </div>
+    ) : (
+      <div className="cart-items">
+        {cartItems.map(item => {
+          const product = item.productId; 
+          if(!product) return null;
+          
+          const price = product.discountPrice || product.price;
+          const total = (price * item.quantity).toFixed(2);
+          
+          return (
+            <div key={item._id} className="cart-item">
+              <img 
+                src={product.images?.[0] || "/fallback.png"} 
+                alt={product.title}
+                onError={(e) => {
+                  e.target.src = "/fallback.png";
+                }}
+              />
+              <div className="cart-item-info">
+                <h4 className="cart-item-title">{product.title}</h4>
+                <p className="cart-item-price">${price.toFixed(2)}</p>
                 
-                navigate("/checkout", { 
-                  state: { 
-                    selectedAddress, 
-                    type: activeTab,
-                    cartItems: cartItems
-                  } 
-                });
-              }}>Go to Checkout</button>
-            )}
-          </div>
+                <div className="quantity-control">
+                  <button 
+                    onClick={()=>handleQuantityChange(item._id, item.quantity-1)} 
+                    disabled={item.quantity<=1}
+                  >
+                    -
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>
+                    +
+                  </button>
+                </div>
+                
+                <div className="cart-item-actions">
+                  <span className="cart-item-total">Total: ${total}</span>
+                  <button 
+                    className="delete-btn"
+                    onClick={()=>handleDelete(item._id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </div>
+  
+  {cartItems.length > 0 && (
+    <div className="cart-footer">
+      <div className="cart-summary">
+        <span className="cart-total">Total Amount:</span>
+        <span className="cart-amount">
+          ${cartItems.reduce((total, item) => {
+            const product = item.productId;
+            const price = product?.discountPrice || product?.price || 0;
+            return total + (price * item.quantity);
+          }, 0).toFixed(2)}
+        </span>
+      </div>
+      <button 
+        className="checkout-btn" 
+        onClick={() => {
+          const selectedAddress = activeTab === "delivery" 
+            ? deliveryAddresses.find(a => a.id === selectedDelivery) 
+            : pickupAddresses.find(a => a.id === selectedPickup);
+          
+          navigate("/checkout", { 
+            state: { 
+              selectedAddress, 
+              type: activeTab,
+              cartItems: cartItems
+            } 
+          });
+          setOpenCart(false);
+        }}
+      >
+        Proceed to Checkout
+      </button>
+    </div>
+  )}
+</div>
         </div>
 
         {/* MOBILE SEARCH SIDEBAR */}
