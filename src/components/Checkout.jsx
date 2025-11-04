@@ -138,7 +138,7 @@ export default function Checkout() {
     }
   }, [navCartItems]);
 
-  // Handle order creation
+  // ✅ FIXED: Handle order creation
   const handleConfirm = async (e) => {
     e.preventDefault();
     setError("");
@@ -177,20 +177,23 @@ export default function Checkout() {
     }
 
     try {
-      console.log(" Starting order creation...");
+      console.log("🚀 Starting order creation...");
 
-      // Prepare order items for backend
-      const orderItems = cartItems.map(item => ({
-        productId: (item.productId?._id || item.productId || item.product?._id),
-        quantity: item.quantity,
-        price: (item.productId?.discountPrice || item.productId?.price || item.product?.price)
-      }));
+      // ✅ FIXED: Prepare order items with proper data
+      const orderItems = cartItems.map(item => {
+        const product = item.productId || item.product;
+        return {
+          productId: product._id,
+          quantity: item.quantity,
+          price: product.discountPrice || product.price
+        };
+      });
 
-      console.log(" Order items:", orderItems);
+      console.log("📦 Order items:", orderItems);
 
       const totalAmount = subtotal + saving + deliveryCost;
 
-      // Create order in backend
+      // ✅ FIXED: Create order with complete buyer information
       const orderData = {
         address: pickupLocation,
         items: orderItems,
@@ -199,11 +202,15 @@ export default function Checkout() {
         paymentMethod: paymentMethod,
         totalAmount: totalAmount,
         orderNote: orderNote,
-        packaging: packaging
+        packaging: packaging,
+        // ✅ Add buyer information for product orders
+        buyerName: `${user.firstName} ${user.lastName}`,
+        buyerEmail: user.email
       };
 
-      console.log(" Order data:", orderData);
+      console.log("📝 Order data:", orderData);
 
+      // ✅ Create main order - this will automatically add to product.orders
       const orderResponse = await axios.post(
         "https://freshcart-backend-4wrc.onrender.com/orders",
         orderData,
@@ -215,9 +222,9 @@ export default function Checkout() {
         }
       );
 
-      console.log(" Order created:", orderResponse.data);
+      console.log("✅ Order created:", orderResponse.data);
 
-      // Clear cart after successful order
+      // ✅ Clear cart after successful order
       try {
         await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
           headers: { Authorization: `Bearer ${token}` }
@@ -226,8 +233,6 @@ export default function Checkout() {
       } catch (clearError) {
         console.warn("⚠️ Could not clear cart:", clearError);
       }
-
-      // Update products with order information
 
       // Show success and redirect
       setConfirmed(true);
@@ -244,12 +249,17 @@ export default function Checkout() {
       }, 3000);
 
     } catch (err) {
-      console.error(" Error placing order:", err);
+      console.error("❌ Error placing order:", err);
       let errorMessage = "Something went wrong during checkout!";
       
       if (err.response) {
         console.error(" Response error:", err.response.data);
         errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+        
+        // Show specific error messages
+        if (err.response.data.error?.includes("Insufficient quantity")) {
+          errorMessage = "Some items are out of stock. Please update your cart.";
+        }
       } else if (err.request) {
         console.error(" Network error:", err.request);
         errorMessage = "Network error. Please check your connection.";

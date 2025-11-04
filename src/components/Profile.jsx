@@ -56,20 +56,8 @@ const Profile = () => {
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // Extract received orders from products
-        const allOrders = [];
-        productsRes.data.forEach((product) => {
-          if (product.orders && product.orders.length > 0) {
-            product.orders.forEach((order) => {
-              allOrders.push({
-                ...order,
-                productId: product._id,
-                productTitle: product.title,
-                productImage: product.images?.[0],
-              });
-            });
-          }
-        });
+        // ✅ FIXED: Extract received orders with proper validation
+        const allOrders = extractReceivedOrders(productsRes.data);
         setReceivedOrders(allOrders);
       } catch (err) {
         console.error(err);
@@ -81,6 +69,43 @@ const Profile = () => {
     fetchData();
   }, [token]);
 
+  // ✅ FIXED: Proper order extraction function
+  const extractReceivedOrders = (products) => {
+    const allOrders = [];
+    
+    products.forEach((product) => {
+      if (product.orders && product.orders.length > 0) {
+        product.orders.forEach((order) => {
+          // ✅ Only include orders that have both productId and orderId
+          if (order.orderId && product._id) {
+            allOrders.push({
+              ...order,
+              productId: product._id,
+              productTitle: product.title,
+              productImage: product.images?.[0],
+              // Ensure all required fields exist
+              buyerName: order.buyerName || "Unknown Buyer",
+              buyerEmail: order.buyerEmail || "No email",
+              address: order.address || "Address not available",
+              phone: order.phone || "No phone",
+              orderId: order.orderId,
+              status: order.status || "pending"
+            });
+          } else {
+            console.warn("⚠️ Skipping order - missing IDs:", {
+              hasOrderId: !!order.orderId,
+              hasProductId: !!product._id,
+              order: order
+            });
+          }
+        });
+      }
+    });
+    
+    console.log("📦 Extracted orders:", allOrders.length);
+    return allOrders;
+  };
+
   const refreshMyProducts = async () => {
     try {
       const res = await axios.get(
@@ -89,75 +114,68 @@ const Profile = () => {
       );
       setMyProducts(res.data);
       
-      const allOrders = [];
-      res.data.forEach((product) => {
-        if (product.orders && product.orders.length > 0) {
-          product.orders.forEach((order) => {
-            allOrders.push({
-              ...order,
-              productId: product._id,
-              productTitle: product.title,
-              productImage: product.images?.[0],
-            });
-          });
-        }
-      });
+      const allOrders = extractReceivedOrders(res.data);
       setReceivedOrders(allOrders);
     } catch (err) {
       console.error("Refresh failed", err);
     }
   };
 
-  // Mark order as shipped
-// In the markAsShipped function, add better validation:
-const markAsShipped = async (order) => {
-  try {
-    console.log("Marking order as shipped:", order);
-    
-    if (!order.productId || !order.orderId) {
-      alert("Error: Product ID or Order ID not found for this order");
-      return;
-    }
-
-    // Validate order data
-    if (!order.orderId || order.orderId === 'undefined') {
-      alert("Error: Invalid Order ID");
-      return;
-    }
-
-    const response = await axios.patch(
-      `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
-      { status: "shipped" },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+  // ✅ FIXED: Mark order as shipped
+  const markAsShipped = async (order) => {
+    try {
+      console.log("🚚 Marking order as shipped:", order);
+      
+      if (!order.productId) {
+        alert("❌ Error: Product ID not found for this order");
+        return;
       }
-    );
+      
+      if (!order.orderId) {
+        alert("❌ Error: Order ID not found for this order");
+        return;
+      }
 
-    console.log("Order update response:", response.data);
+      console.log("📤 Sending request with:", {
+        productId: order.productId,
+        orderId: order.orderId
+      });
 
-    // Update UI instantly
-    setReceivedOrders((prev) =>
-      prev.map((o) => 
-        o.orderId === order.orderId ? { ...o, status: "shipped" } : o
-      )
-    );
+      const response = await axios.patch(
+        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
+        { status: "shipped" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    alert("✅ Order marked as shipped successfully!");
+      console.log("✅ Order update response:", response.data);
 
-  } catch (err) {
-    console.error("❌ Error updating order:", err);
-    console.error("Error details:", err.response?.data);
-    alert("Failed to update order status: " + (err.response?.data?.error || err.message));
-  }
-};
-  // Debug function to check orders data
+      // Update UI instantly
+      setReceivedOrders((prev) =>
+        prev.map((o) => 
+          o.orderId === order.orderId ? { ...o, status: "shipped" } : o
+        )
+      );
+
+      alert("✅ Order marked as shipped successfully!");
+
+    } catch (err) {
+      console.error("❌ Error updating order:", err);
+      console.error("Error details:", err.response?.data);
+      alert("Failed to update order status: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  // Debug function
   const debugOrders = () => {
-    console.log("=== DEBUG ORDERS ===");
+    console.log("=== 🐛 DEBUG ORDERS ===");
     console.log("My Products:", myProducts);
     console.log("Received Orders:", receivedOrders);
+    
     receivedOrders.forEach((order, index) => {
       console.log(`Order ${index}:`, {
         orderId: order.orderId,
@@ -165,9 +183,16 @@ const markAsShipped = async (order) => {
         status: order.status,
         productTitle: order.productTitle,
         buyerName: order.buyerName,
-        address: order.address
+        address: order.address,
+        hasOrderId: !!order.orderId,
+        hasProductId: !!order.productId
       });
     });
+
+    const invalidOrders = receivedOrders.filter(o => !o.orderId || !o.productId);
+    if (invalidOrders.length > 0) {
+      console.warn("❌ Invalid orders (missing IDs):", invalidOrders);
+    }
   };
 
   if (loading)
@@ -228,7 +253,7 @@ const markAsShipped = async (order) => {
       {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3> My Orders ({myOrders.length})</h3>
+          <h3>📦 My Orders ({myOrders.length})</h3>
           {myOrders.length === 0 ? (
             <p>You haven't placed any orders yet.</p>
           ) : (
@@ -248,13 +273,13 @@ const markAsShipped = async (order) => {
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3> My Uploaded Products ({myProducts.length})</h3>
+            <h3>📦 My Uploaded Products ({myProducts.length})</h3>
             <div>
               <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
-                 Debug
+                🐛 Debug
               </button>
               <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄Refresh
+                🔄 Refresh
               </button>
             </div>
           </div>
@@ -272,6 +297,12 @@ const markAsShipped = async (order) => {
                   <p className="orders-count">
                     Orders: {p.orders ? p.orders.length : 0}
                   </p>
+                  {/* Show order IDs for debugging */}
+                  {p.orders && p.orders.length > 0 && (
+                    <div style={{fontSize: '10px', marginTop: '5px', color: '#666'}}>
+                      Order IDs: {p.orders.map(o => o.orderId ? o.orderId.toString().slice(-6) : 'N/A').join(', ')}
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -279,35 +310,44 @@ const markAsShipped = async (order) => {
 
           <div className="received-orders">
             <h3>📬 Received Orders ({receivedOrders.length})</h3>
+            
+            {/* Show validation info */}
+            <div className="validation-info">
+              <small>
+                Valid orders: {receivedOrders.filter(o => o.orderId && o.productId).length} / {receivedOrders.length}
+              </small>
+            </div>
+
             <div className="order-grid">
               {receivedOrders.length === 0 ? (
                 <p>No received orders yet.</p>
               ) : (
                 receivedOrders.map((order) => (
-                  <div key={order.orderId} className="order-card received-order">
+                  <div key={order.orderId || Math.random()} className="order-card received-order">
                     <img
                       src={order.productImage || "https://via.placeholder.com/80"}
                       alt={order.productTitle}
                     />
                     <div className="order-info">
                       <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> {order.orderId}</p>
+                      <p><strong>Order ID:</strong> {order.orderId ? order.orderId.toString().slice(-8) : '❌ MISSING'}</p>
+                      <p><strong>Product ID:</strong> {order.productId ? order.productId.toString().slice(-8) : '❌ MISSING'}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
-                      <p><strong>Buyer Name:</strong> {order.buyerName}</p>
-                      <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
+                      <p><strong>Buyer:</strong> {order.buyerName}</p>
+                      <p><strong>Email:</strong> {order.buyerEmail}</p>
                       <p><strong>Phone:</strong> {order.phone}</p>
                       <p><strong>Address:</strong> {order.address}</p>
                       <p><strong>Status:</strong> 
                         <span className={`status ${order.status}`}>{order.status}</span>
                       </p>
-                      <p><strong>Product ID:</strong> {order.productId}</p>
                     </div>
                     <button
                       className="ship-btn"
                       onClick={() => markAsShipped(order)}
-                      disabled={order.status === "shipped"}
+                      disabled={order.status === "shipped" || !order.orderId || !order.productId}
+                      title={!order.orderId || !order.productId ? "Missing order data - check console" : ""}
                     >
-                      {order.status === "shipped" ? " Shipped" : " Mark as Shipped"}
+                      {order.status === "shipped" ? "✅ Shipped" : "🚚 Mark as Shipped"}
                     </button>
                   </div>
                 ))
