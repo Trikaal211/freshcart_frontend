@@ -841,15 +841,18 @@ const Navbar = () => {
                 const selectedAddress = activeTab === "delivery" 
                   ? deliveryAddresses.find(a => a.id === selectedDelivery) 
                   : pickupAddresses.find(a => a.id === selectedPickup);
-                
+                            { setOpenCart(false)};
+
                 navigate("/checkout", { 
                   state: { 
                     selectedAddress, 
                     type: activeTab,
                     cartItems: cartItems
                   } 
+                  
                 });
               }}>Go to Checkout</button>
+              
             )}
           </div>
         </div>
