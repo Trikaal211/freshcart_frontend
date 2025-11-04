@@ -17,6 +17,7 @@ import AllProducts from "./pages/AllProduct.jsx";
 import Checkout from "./components/Checkout.jsx";
 import Signup from "./components/Signup.jsx";
 import Profile from "./components/Profile.jsx";
+import Recipes from "./components/Recipes.jsx";
 
 function Routers() {
   return (
@@ -29,6 +30,7 @@ function Routers() {
           <Route path="/user" element={<User />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/sign-up" element={<Signup />} />
+          <Route path="/recipes" element={<Recipes />} />
 
           <Route path="/categories" element={<Categories />} />
           <Route path="/product/:id" element={<ProductDetail />} />
