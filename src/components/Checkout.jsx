@@ -7,6 +7,7 @@ export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Get data from navigation state
   const { selectedAddress, type, cartItems: navCartItems } = location.state || {};
 
   // Cart states
@@ -14,7 +15,6 @@ export default function Checkout() {
   const [subtotal, setSubtotal] = useState(0);
   const [saving, setSaving] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [user, setUser] = useState(null);
 
   // Other checkout states
   const [pickupLocation, setPickupLocation] = useState(
@@ -41,18 +41,6 @@ export default function Checkout() {
 
   const currency = (v) => `₹${v.toFixed(2)}`;
 
-  // Fetch user data
-  const fetchUserData = async () => {
-    try {
-      const res = await axios.get("https://freshcart-backend-4wrc.onrender.com/users/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(res.data);
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-    }
-  };
-
   // Fetch cart items function
   const fetchCartItems = async () => {
     if (!token) {
@@ -70,6 +58,9 @@ export default function Checkout() {
       });
       
       const cartData = res.data;
+      console.log("🛒 Cart data:", cartData);
+      
+      // Handle different response formats
       const products = cartData.products || cartData.items || [];
       setCartItems(products);
       
@@ -90,7 +81,7 @@ export default function Checkout() {
           itemCount += quantity;
         }
       });
-        
+
       setSubtotal(calculatedSubtotal);
       setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
       setTotalItems(itemCount);
@@ -101,7 +92,7 @@ export default function Checkout() {
       setLoading(false);
     }
   };
-    
+
   // Calculate cart totals
   useEffect(() => {
     if (navCartItems && navCartItems.length > 0) {
@@ -130,11 +121,6 @@ export default function Checkout() {
       setLoading(false);
     } else {
       fetchCartItems();
-    }
-
-    // Fetch user data
-    if (token) {
-      fetchUserData();
     }
   }, [navCartItems]);
 
@@ -170,11 +156,6 @@ export default function Checkout() {
       setIsSubmitting(false);
       return;
     }
-    if (!user) {
-      setError("User information not available.");
-      setIsSubmitting(false);
-      return;
-    }
 
     try {
       console.log(" Starting order creation...");
@@ -186,7 +167,7 @@ export default function Checkout() {
         price: (item.productId?.discountPrice || item.productId?.price || item.product?.price)
       }));
 
-      console.log(" Order items:", orderItems);
+      console.log("Order items:", orderItems);
 
       const totalAmount = subtotal + saving + deliveryCost;
 
@@ -222,9 +203,10 @@ export default function Checkout() {
         await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log("🛒 Cart cleared successfully");
+        console.log("Cart cleared successfully");
       } catch (clearError) {
-        console.warn("⚠️ Could not clear cart:", clearError);
+        console.warn(" Could not clear cart:", clearError);
+        // Continue even if cart clearing fails
       }
 
       // Update products with order information
@@ -236,17 +218,13 @@ export default function Checkout() {
             console.warn(" No product ID found for item:", item);
             return;
           }
-                            
+
           await axios.post(
             `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
             {
               quantity: item.quantity,
               orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price,
-              orderId: orderResponse.data.order?._id || orderResponse.data._id,
-              buyerName: `${user.firstName} ${user.lastName}`,
-              buyerEmail: user.email,
-              address: pickupLocation,
-              phone: phone.trim()
+              orderId: orderResponse.data.order?._id || orderResponse.data._id
             },
             {
               headers: { 
@@ -258,6 +236,7 @@ export default function Checkout() {
           console.log(` Order added to product ${productId}`);
         } catch (productErr) {
           console.error(` Error updating product:`, productErr);
+          // Continue with other products even if one fails
         }
       });
 
@@ -285,7 +264,7 @@ export default function Checkout() {
         console.error(" Response error:", err.response.data);
         errorMessage = err.response.data.error || err.response.data.message || errorMessage;
       } else if (err.request) {
-        console.error(" Network error:", err.request);
+        console.error("Network error:", err.request);
         errorMessage = "Network error. Please check your connection.";
       }
       
@@ -576,7 +555,7 @@ export default function Checkout() {
         </div>
         
         <div className="warn">
-           Weighted products in cart — final amount may vary slightly.
+          💡 Weighted products in cart — final amount may vary slightly.
         </div>
       </aside>
     </div>
