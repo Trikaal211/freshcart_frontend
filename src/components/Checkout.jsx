@@ -228,40 +228,6 @@ export default function Checkout() {
       }
 
       // Update products with order information
-      console.log("Updating products with order info...");
-      const updatePromises = cartItems.map(async (item) => {
-        try {
-          const productId = item.productId?._id || item.productId || item.product?._id;
-          if (!productId) {
-            console.warn(" No product ID found for item:", item);
-            return;
-          }
-
-          await axios.post(
-            `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
-            {
-              quantity: item.quantity,
-              orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price,
-              orderId: orderResponse.data.order?._id || orderResponse.data._id,
-              buyerName: `${user.firstName} ${user.lastName}`,
-              buyerEmail: user.email,
-              address: pickupLocation,
-              phone: phone.trim()
-            },
-            {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-              }
-            }
-          );
-          console.log(` Order added to product ${productId}`);
-        } catch (productErr) {
-          console.error(` Error updating product:`, productErr);
-        }
-      });
-
-      await Promise.allSettled(updatePromises);
 
       // Show success and redirect
       setConfirmed(true);

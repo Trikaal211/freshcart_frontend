@@ -109,44 +109,50 @@ const Profile = () => {
   };
 
   // Mark order as shipped
-  const markAsShipped = async (order) => {
-    try {
-      console.log("Marking order as shipped:", order);
-      
-      if (!order.productId) {
-        alert("Error: Product ID not found for this order");
-        return;
-      }
-
-      const response = await axios.patch(
-        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
-        { status: "shipped" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Order update response:", response.data);
-
-      // Update UI instantly
-      setReceivedOrders((prev) =>
-        prev.map((o) => 
-          o.orderId === order.orderId ? { ...o, status: "shipped" } : o
-        )
-      );
-
-      alert(" Order marked as shipped successfully!");
-
-    } catch (err) {
-      console.error(" Error updating order:", err);
-      console.error("Error details:", err.response?.data);
-      alert("Failed to update order status: " + (err.response?.data?.error || err.message));
+// In the markAsShipped function, add better validation:
+const markAsShipped = async (order) => {
+  try {
+    console.log("Marking order as shipped:", order);
+    
+    if (!order.productId || !order.orderId) {
+      alert("Error: Product ID or Order ID not found for this order");
+      return;
     }
-  };
 
+    // Validate order data
+    if (!order.orderId || order.orderId === 'undefined') {
+      alert("Error: Invalid Order ID");
+      return;
+    }
+
+    const response = await axios.patch(
+      `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
+      { status: "shipped" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Order update response:", response.data);
+
+    // Update UI instantly
+    setReceivedOrders((prev) =>
+      prev.map((o) => 
+        o.orderId === order.orderId ? { ...o, status: "shipped" } : o
+      )
+    );
+
+    alert("✅ Order marked as shipped successfully!");
+
+  } catch (err) {
+    console.error("❌ Error updating order:", err);
+    console.error("Error details:", err.response?.data);
+    alert("Failed to update order status: " + (err.response?.data?.error || err.message));
+  }
+};
   // Debug function to check orders data
   const debugOrders = () => {
     console.log("=== DEBUG ORDERS ===");
