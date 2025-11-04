@@ -290,7 +290,7 @@ const Profile = () => {
                       <h4>{order.productTitle}</h4>
                       <p><strong>Order ID:</strong> {order._id}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
-                                            <p><strong>Quantity:</strong> {order.buyerName}</p>
+                                            <p><strong>buyer</strong> {order.buyerName}</p>
 
                       <p><strong>Status:</strong> 
                         <span className={`status ${order.status}`}>{order.status}</span>
