@@ -138,7 +138,7 @@ export default function Checkout() {
     }
   }, [navCartItems]);
 
-  // ✅ FIXED: Handle order creation
+  // ✅ FIXED: Handle order creation with proper orderId handling
   const handleConfirm = async (e) => {
     e.preventDefault();
     setError("");
@@ -222,7 +222,20 @@ export default function Checkout() {
         }
       );
 
-      console.log("✅ Order created:", orderResponse.data);
+      console.log("✅ Order created response:", orderResponse.data);
+
+      // ✅ FIXED: Extract orderId properly from response
+      let orderId;
+      if (orderResponse.data.order && orderResponse.data.order._id) {
+        orderId = orderResponse.data.order._id;
+      } else if (orderResponse.data._id) {
+        orderId = orderResponse.data._id;
+      } else {
+        console.error("❌ Order ID not found in response:", orderResponse.data);
+        throw new Error("Order created but ID not received");
+      }
+
+      console.log("🎯 Extracted Order ID:", orderId);
 
       // ✅ Clear cart after successful order
       try {
@@ -243,7 +256,7 @@ export default function Checkout() {
         navigate("/profile", { 
           state: { 
             message: "Order placed successfully!",
-            orderId: orderResponse.data.order?._id || orderResponse.data._id
+            orderId: orderId
           }
         });
       }, 3000);
