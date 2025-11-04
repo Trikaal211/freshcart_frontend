@@ -56,17 +56,14 @@ const Profile = () => {
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        //  FIXED: Extract received orders from products with productId
+        // Extract received orders from products
         const allOrders = [];
         productsRes.data.forEach((product) => {
           if (product.orders && product.orders.length > 0) {
             product.orders.forEach((order) => {
-              // Convert mongoose document to plain object if needed
-              const orderData = order.toObject ? order.toObject() : order;
-              
               allOrders.push({
-                ...orderData,
-                productId: product._id, // ✅ CRUCIAL: Add productId for API call
+                ...order,
+                productId: product._id,
                 productTitle: product.title,
                 productImage: product.images?.[0],
               });
@@ -92,14 +89,12 @@ const Profile = () => {
       );
       setMyProducts(res.data);
       
-      //  Also refresh received orders after refreshing products
       const allOrders = [];
       res.data.forEach((product) => {
         if (product.orders && product.orders.length > 0) {
           product.orders.forEach((order) => {
-            const orderData = order.toObject ? order.toObject() : order;
             allOrders.push({
-              ...orderData,
+              ...order,
               productId: product._id,
               productTitle: product.title,
               productImage: product.images?.[0],
@@ -113,19 +108,18 @@ const Profile = () => {
     }
   };
 
-  //  FIXED: Mark order as shipped - uses product-embedded orders
+  // Mark order as shipped
   const markAsShipped = async (order) => {
     try {
       console.log("Marking order as shipped:", order);
       
-      // Make sure we have the required IDs
       if (!order.productId) {
         alert("Error: Product ID not found for this order");
         return;
       }
 
       const response = await axios.patch(
-        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order._id}/status`,
+        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
         { status: "shipped" },
         {
           headers: {
@@ -140,7 +134,7 @@ const Profile = () => {
       // Update UI instantly
       setReceivedOrders((prev) =>
         prev.map((o) => 
-          o._id === order._id ? { ...o, status: "shipped" } : o
+          o.orderId === order.orderId ? { ...o, status: "shipped" } : o
         )
       );
 
@@ -160,10 +154,12 @@ const Profile = () => {
     console.log("Received Orders:", receivedOrders);
     receivedOrders.forEach((order, index) => {
       console.log(`Order ${index}:`, {
-        orderId: order._id,
+        orderId: order.orderId,
         productId: order.productId,
         status: order.status,
-        productTitle: order.productTitle
+        productTitle: order.productTitle,
+        buyerName: order.buyerName,
+        address: order.address
       });
     });
   };
@@ -235,6 +231,7 @@ const Profile = () => {
                 <p><strong>ID:</strong> {o._id}</p>
                 <p><strong>Status:</strong> {o.status}</p>
                 <p><strong>Total:</strong> ₹{o.totalAmount}</p>
+                <p><strong>Address:</strong> {o.address}</p>
               </div>
             ))
           )}
@@ -281,17 +278,19 @@ const Profile = () => {
                 <p>No received orders yet.</p>
               ) : (
                 receivedOrders.map((order) => (
-                  <div key={order._id} className="order-card">
+                  <div key={order.orderId} className="order-card received-order">
                     <img
                       src={order.productImage || "https://via.placeholder.com/80"}
                       alt={order.productTitle}
                     />
                     <div className="order-info">
                       <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> {order._id}</p>
+                      <p><strong>Order ID:</strong> {order.orderId}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
-                              <p><strong>Buyer:</strong> {order.buyerName}</p>
-            <p><strong>Address:</strong> {order.address}</p>
+                      <p><strong>Buyer Name:</strong> {order.buyerName}</p>
+                      <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
+                      <p><strong>Phone:</strong> {order.phone}</p>
+                      <p><strong>Address:</strong> {order.address}</p>
                       <p><strong>Status:</strong> 
                         <span className={`status ${order.status}`}>{order.status}</span>
                       </p>
