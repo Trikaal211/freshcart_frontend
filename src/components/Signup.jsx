@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // ✅ Redirect ke liye
+
+import "./signup.css";
 
 const Signup = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -12,30 +17,33 @@ const Signup = () => {
   const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/users/signup", formData);
+      const res = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/users/signup",
+        formData
+      );
+
       setMessage(res.data.message);
       console.log(res.data);
+
+      // ✅ Redirect after successful signup
+      setTimeout(() => {
+        navigate("/user");
+      }, 1000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Signup failed");
     }
   };
 
   return (
-    <div style={{
-      width: "400px",
-      margin: "50px auto",
-      padding: "20px",
-      border: "1px solid #ccc",
-      borderRadius: "10px"
-    }}>
-      <h2>Signup</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="signup-container">
+      <h2>Create Account</h2>
+      <form onSubmit={handleSubmit} className="signup-form">
         <input
           type="text"
           name="firstName"
@@ -43,7 +51,7 @@ const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/users/
           value={formData.firstName}
           onChange={handleChange}
           required
-        /><br /><br />
+        />
 
         <input
           type="text"
@@ -51,16 +59,16 @@ const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/users/
           placeholder="Last Name"
           value={formData.lastName}
           onChange={handleChange}
-        /><br /><br />
+        />
 
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
           required
-        /><br /><br />
+        />
 
         <input
           type="password"
@@ -69,11 +77,12 @@ const res = await axios.post("https://freshcart-backend-4wrc.onrender.com/users/
           value={formData.password}
           onChange={handleChange}
           required
-        /><br /><br />
+        />
 
         <button type="submit">Sign Up</button>
       </form>
-      <p>{message}</p>
+
+      {message && <p className="signup-message">{message}</p>}
     </div>
   );
 };
