@@ -56,7 +56,7 @@ const Profile = () => {
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // ✅ FIXED: Extract received orders from products with productId
+        //  FIXED: Extract received orders from products with productId
         const allOrders = [];
         productsRes.data.forEach((product) => {
           if (product.orders && product.orders.length > 0) {
@@ -92,7 +92,7 @@ const Profile = () => {
       );
       setMyProducts(res.data);
       
-      // ✅ Also refresh received orders after refreshing products
+      //  Also refresh received orders after refreshing products
       const allOrders = [];
       res.data.forEach((product) => {
         if (product.orders && product.orders.length > 0) {
@@ -113,10 +113,10 @@ const Profile = () => {
     }
   };
 
-  // ✅ FIXED: Mark order as shipped - uses product-embedded orders
+  //  FIXED: Mark order as shipped - uses product-embedded orders
   const markAsShipped = async (order) => {
     try {
-      console.log("📦 Marking order as shipped:", order);
+      console.log("Marking order as shipped:", order);
       
       // Make sure we have the required IDs
       if (!order.productId) {
@@ -135,7 +135,7 @@ const Profile = () => {
         }
       );
 
-      console.log("✅ Order update response:", response.data);
+      console.log("Order update response:", response.data);
 
       // Update UI instantly
       setReceivedOrders((prev) =>
@@ -144,10 +144,10 @@ const Profile = () => {
         )
       );
 
-      alert("✅ Order marked as shipped successfully!");
+      alert(" Order marked as shipped successfully!");
 
     } catch (err) {
-      console.error("❌ Error updating order:", err);
+      console.error(" Error updating order:", err);
       console.error("Error details:", err.response?.data);
       alert("Failed to update order status: " + (err.response?.data?.error || err.message));
     }
@@ -226,7 +226,7 @@ const Profile = () => {
       {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3>📦 My Orders ({myOrders.length})</h3>
+          <h3> My Orders ({myOrders.length})</h3>
           {myOrders.length === 0 ? (
             <p>You haven't placed any orders yet.</p>
           ) : (
@@ -245,13 +245,13 @@ const Profile = () => {
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3>🛍️ My Uploaded Products ({myProducts.length})</h3>
+            <h3> My Uploaded Products ({myProducts.length})</h3>
             <div>
               <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
-                🐛 Debug
+                 Debug
               </button>
               <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄 Refresh
+                🔄Refresh
               </button>
             </div>
           </div>
@@ -300,7 +300,7 @@ const Profile = () => {
                       onClick={() => markAsShipped(order)}
                       disabled={order.status === "shipped"}
                     >
-                      {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
+                      {order.status === "shipped" ? " Shipped" : " Mark as Shipped"}
                     </button>
                   </div>
                 ))
