@@ -219,22 +219,20 @@ export default function Checkout() {
             return;
           }
 
-       await axios.post(
-  `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
-  {
-    quantity: item.quantity,
-    orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price,
-    orderId: orderResponse.data.order?._id || orderResponse.data._id,
-    uploadedBy: item.productId?.uploadedBy?._id || item.product?.uploadedBy?._id
-  },
-  {
-    headers: { 
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
-  }
-);
-
+          await axios.post(
+            `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
+            {
+              quantity: item.quantity,
+              orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price,
+              orderId: orderResponse.data.order?._id || orderResponse.data._id
+            },
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              }
+            }
+          );
           console.log(`✅ Order added to product ${productId}`);
         } catch (productErr) {
           console.error(`❌ Error updating product:`, productErr);
