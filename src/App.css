@@ -45,3 +45,67 @@ body {
   
 }
 
+/* Loader aesthetic */
+.loader-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #101010, #202020);
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  text-align: center;
+  animation: fadeIn 1s ease;
+}
+
+.loader-circle {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top: 6px solid #00b7ff;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scroll-top button (glass effect) */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  height: 55px;
+  width: 55px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 15px rgba(0, 183, 255, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.scroll-top-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(0, 183, 255, 0.5);
+}
