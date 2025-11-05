@@ -56,14 +56,17 @@ const Profile = () => {
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // Extract received orders from products
+        // ✅ FIXED: Extract received orders from products with productId
         const allOrders = [];
         productsRes.data.forEach((product) => {
           if (product.orders && product.orders.length > 0) {
             product.orders.forEach((order) => {
+              // Convert mongoose document to plain object if needed
+              const orderData = order.toObject ? order.toObject() : order;
+              
               allOrders.push({
-                ...order,
-                productId: product._id,
+                ...orderData,
+                productId: product._id, // ✅ CRUCIAL: Add productId for API call
                 productTitle: product.title,
                 productImage: product.images?.[0],
               });
@@ -89,12 +92,14 @@ const Profile = () => {
       );
       setMyProducts(res.data);
       
+      // ✅ Also refresh received orders after refreshing products
       const allOrders = [];
       res.data.forEach((product) => {
         if (product.orders && product.orders.length > 0) {
           product.orders.forEach((order) => {
+            const orderData = order.toObject ? order.toObject() : order;
             allOrders.push({
-              ...order,
+              ...orderData,
               productId: product._id,
               productTitle: product.title,
               productImage: product.images?.[0],
@@ -108,18 +113,19 @@ const Profile = () => {
     }
   };
 
-  // Mark order as shipped
+  // ✅ FIXED: Mark order as shipped - uses product-embedded orders
   const markAsShipped = async (order) => {
     try {
-      console.log("Marking order as shipped:", order);
+      console.log("📦 Marking order as shipped:", order);
       
+      // Make sure we have the required IDs
       if (!order.productId) {
         alert("Error: Product ID not found for this order");
         return;
       }
 
       const response = await axios.patch(
-        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
+        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order._id}/status`,
         { status: "shipped" },
         {
           headers: {
@@ -129,19 +135,19 @@ const Profile = () => {
         }
       );
 
-      console.log("Order update response:", response.data);
+      console.log("✅ Order update response:", response.data);
 
       // Update UI instantly
       setReceivedOrders((prev) =>
         prev.map((o) => 
-          o.orderId === order.orderId ? { ...o, status: "shipped" } : o
+          o._id === order._id ? { ...o, status: "shipped" } : o
         )
       );
 
-      alert(" Order marked as shipped successfully!");
+      alert("✅ Order marked as shipped successfully!");
 
     } catch (err) {
-      console.error(" Error updating order:", err);
+      console.error("❌ Error updating order:", err);
       console.error("Error details:", err.response?.data);
       alert("Failed to update order status: " + (err.response?.data?.error || err.message));
     }
@@ -154,12 +160,10 @@ const Profile = () => {
     console.log("Received Orders:", receivedOrders);
     receivedOrders.forEach((order, index) => {
       console.log(`Order ${index}:`, {
-        orderId: order.orderId,
+        orderId: order._id,
         productId: order.productId,
         status: order.status,
-        productTitle: order.productTitle,
-        buyerName: order.buyerName,
-        address: order.address
+        productTitle: order.productTitle
       });
     });
   };
@@ -222,7 +226,7 @@ const Profile = () => {
       {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3> My Orders ({myOrders.length})</h3>
+          <h3>📦 My Orders ({myOrders.length})</h3>
           {myOrders.length === 0 ? (
             <p>You haven't placed any orders yet.</p>
           ) : (
@@ -231,7 +235,6 @@ const Profile = () => {
                 <p><strong>ID:</strong> {o._id}</p>
                 <p><strong>Status:</strong> {o.status}</p>
                 <p><strong>Total:</strong> ₹{o.totalAmount}</p>
-                <p><strong>Address:</strong> {o.address}</p>
               </div>
             ))
           )}
@@ -242,13 +245,13 @@ const Profile = () => {
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3> My Uploaded Products ({myProducts.length})</h3>
+            <h3>🛍️ My Uploaded Products ({myProducts.length})</h3>
             <div>
               <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
-                 Debug
+                🐛 Debug
               </button>
               <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄Refresh
+                🔄 Refresh
               </button>
             </div>
           </div>
@@ -278,19 +281,15 @@ const Profile = () => {
                 <p>No received orders yet.</p>
               ) : (
                 receivedOrders.map((order) => (
-                  <div key={order.orderId} className="order-card received-order">
+                  <div key={order._id} className="order-card">
                     <img
                       src={order.productImage || "https://via.placeholder.com/80"}
                       alt={order.productTitle}
                     />
                     <div className="order-info">
                       <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> {order.orderId}</p>
+                      <p><strong>Order ID:</strong> {order._id}</p>
                       <p><strong>Quantity:</strong> {order.quantity}</p>
-                      <p><strong>Buyer Name:</strong> {order.buyerName}</p>
-                      <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
-                      <p><strong>Phone:</strong> {order.phone}</p>
-                      <p><strong>Address:</strong> {order.address}</p>
                       <p><strong>Status:</strong> 
                         <span className={`status ${order.status}`}>{order.status}</span>
                       </p>
@@ -301,7 +300,7 @@ const Profile = () => {
                       onClick={() => markAsShipped(order)}
                       disabled={order.status === "shipped"}
                     >
-                      {order.status === "shipped" ? " Shipped" : " Mark as Shipped"}
+                      {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
                     </button>
                   </div>
                 ))
