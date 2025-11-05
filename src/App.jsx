@@ -67,7 +67,7 @@ const App = () => {
       <Productlist />
       <Hero />
 
-      <div className="container">
+      <div className="containeru">
         {showScrollTop && (
           <div
             className="scroll-top-btn"
