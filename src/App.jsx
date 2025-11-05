@@ -64,7 +64,6 @@ const App = () => {
 
   return (
     <>
-      <Productlist />
 
       <div className="container">
         {showScrollTop && (
@@ -89,6 +88,8 @@ const App = () => {
         <Categories />
         <Lifestyle />
         <SpecialProducts />
+              <Productlist />
+
         <div id="recipes"></div>
         <Recipes />
         <Contact />
