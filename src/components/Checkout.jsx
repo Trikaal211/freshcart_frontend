@@ -156,6 +156,7 @@ const fetchCartItems = async () => {
 
   // Handle order creation
 // Handle order creation - FIXED VERSION
+// Handle order creation - FIXED VERSION
 const handleConfirm = async (e) => {
   e.preventDefault();
   setError("");
@@ -197,49 +198,79 @@ const handleConfirm = async (e) => {
     console.log(" Starting order creation...");
     console.log(" Cart items:", cartItems);
 
-    // 🟢 DEBUG: Check product IDs
-    cartItems.forEach((item, index) => {
-      console.log(`Item ${index}:`, {
-        productId: item.productId,
-        product: item.product,
-        productId_type: typeof item.productId,
-        product_type: typeof item.product,
-        productId_full: item.productId,
-        product_full: item.product
-      });
+    // 🟢 CORRECTED: Filter out invalid items and prepare order items
+    const validCartItems = cartItems.filter(item => {
+      let productId;
+      
+      if (item.productId && typeof item.productId === 'object') {
+        productId = item.productId._id;
+      } else if (item.productId) {
+        productId = item.productId;
+      } else if (item.product && typeof item.product === 'object') {
+        productId = item.product._id;
+      } else if (item.product) {
+        productId = item.product;
+      }
+
+      const isValid = !!productId && item.quantity > 0;
+      
+      if (!isValid) {
+        console.warn("❌ Removing invalid cart item:", item);
+      }
+      
+      return isValid;
     });
 
-    // 🟢 CORRECTED: Prepare order items properly
-    const orderItems = cartItems.map(item => {
+    if (validCartItems.length === 0) {
+      setError("Your cart contains invalid items. Please check your cart.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    console.log(" Valid cart items:", validCartItems);
+
+    const orderItems = validCartItems.map(item => {
       let productId;
       
       // Check different possible structures
       if (item.productId && typeof item.productId === 'object') {
-        productId = item.productId._id; // {productId: {_id: '...'}}
+        productId = item.productId._id;
       } else if (item.productId) {
-        productId = item.productId; // {productId: '...'}
+        productId = item.productId;
       } else if (item.product && typeof item.product === 'object') {
-        productId = item.product._id; // {product: {_id: '...'}}
+        productId = item.product._id;
       } else if (item.product) {
-        productId = item.product; // {product: '...'}
+        productId = item.product;
       }
 
-      console.log(`Resolved productId for item:`, productId);
-
-      if (!productId) {
-        throw new Error(`Invalid product structure for item: ${JSON.stringify(item)}`);
-      }
+      const price = item.productId?.discountPrice || item.productId?.price || item.product?.price || item.price || 0;
 
       return {
         productId: productId,
         quantity: item.quantity,
-        price: (item.productId?.discountPrice || item.productId?.price || item.product?.price || 0)
+        price: price
       };
     });
 
     console.log(" Final order items:", orderItems);
 
-    const totalAmount = subtotal + saving + deliveryCost;
+    // 🟢 Recalculate totals based on valid items only
+    let recalculatedSubtotal = 0;
+    let recalculatedSaving = 0;
+    
+    validCartItems.forEach(item => {
+      const product = item.productId || item.product;
+      if (product) {
+        const actualPrice = product.discountPrice || product.price || item.price || 0;
+        const originalPrice = product.price || actualPrice;
+        const quantity = item.quantity;
+        
+        recalculatedSubtotal += actualPrice * quantity;
+        recalculatedSaving += (originalPrice - actualPrice) * quantity;
+      }
+    });
+
+    const totalAmount = recalculatedSubtotal + recalculatedSaving + deliveryCost;
 
     // Create order in backend
     const orderData = {
@@ -271,12 +302,11 @@ const handleConfirm = async (e) => {
     const createdOrder = orderResponse.data.order || orderResponse.data;
     const orderId = createdOrder._id;
 
-    // 🟢 CORRECTED: Update products with order information
+    // 🟢 Update products with order information (only valid items)
     console.log("Updating products with order info...");
     
-    const updatePromises = cartItems.map(async (item, index) => {
+    const updatePromises = validCartItems.map(async (item, index) => {
       try {
-        // Use the same logic as above to get productId
         let productId;
         
         if (item.productId && typeof item.productId === 'object') {
@@ -290,7 +320,7 @@ const handleConfirm = async (e) => {
         }
 
         if (!productId) {
-          console.error(`❌ No product ID found for item ${index}:`, item);
+          console.error(`❌ No product ID found for valid item ${index}:`, item);
           return;
         }
 
@@ -298,15 +328,13 @@ const handleConfirm = async (e) => {
 
         const productOrderData = {
           quantity: item.quantity,
-          orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price || 0,
+          orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price || item.price || 0,
           orderId: orderId,
           buyerName: `${user.firstName} ${user.lastName}`,
           buyerEmail: user.email,
           address: pickupLocation,
           phone: phone.trim()
         };
-
-        console.log(` Product order data for ${productId}:`, productOrderData);
 
         await axios.post(
           `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
@@ -336,6 +364,13 @@ const handleConfirm = async (e) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log("🛒 Cart cleared successfully");
+      
+      // 🟢 Also update local state
+      setCartItems([]);
+      setSubtotal(0);
+      setSaving(0);
+      setTotalItems(0);
+      
     } catch (clearError) {
       console.warn("⚠️ Could not clear cart:", clearError);
       // Continue even if cart clearing fails
@@ -363,7 +398,6 @@ const handleConfirm = async (e) => {
       console.error(" Response error:", err.response.data);
       errorMessage = err.response.data.error || err.response.data.message || errorMessage;
       
-      // 🟢 Specific error for product not found
       if (err.response.data.error?.includes('Product not found')) {
         errorMessage = "One of the products in your cart is no longer available. Please check your cart.";
       }
