@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { HiMiniChevronDown, HiMapPin, HiClock, HiPhone } from "react-icons/hi2";
+import { HiMapPin, HiClock, HiPhone, HiX } from "react-icons/hi";
 import "./deliverysidebar.css";
 
 const DeliverySidebar = ({
@@ -25,7 +25,7 @@ const DeliverySidebar = ({
     label: "Home"
   });
 
-  // Load addresses from localStorage on component mount
+  // Load addresses from localStorage
   useEffect(() => {
     const savedAddresses = localStorage.getItem('userDeliveryAddresses');
     const savedSelection = localStorage.getItem('selectedDeliveryAddress');
@@ -38,14 +38,14 @@ const DeliverySidebar = ({
     }
   }, []);
 
-  // Save addresses to localStorage whenever they change
+  // Save addresses to localStorage
   useEffect(() => {
     if (deliveryAddresses.length > 0) {
       localStorage.setItem('userDeliveryAddresses', JSON.stringify(deliveryAddresses));
     }
   }, [deliveryAddresses]);
 
-  // Save selected address to localStorage
+  // Save selected address
   useEffect(() => {
     if (selectedDelivery) {
       localStorage.setItem('selectedDeliveryAddress', selectedDelivery);
@@ -102,7 +102,7 @@ const DeliverySidebar = ({
     setDeliveryAddresses(updatedAddresses);
     setSelectedDelivery(newAddress.id);
     
-    // Reset form and close
+    // Reset form
     setFormData({
       street: "",
       city: "",
@@ -128,45 +128,47 @@ const DeliverySidebar = ({
       {openAddress && <div className="sidebar-overlay" onClick={() => setOpenAddress(false)}></div>}
       
       <div className={`delivery-sidebar ${openAddress ? "open" : ""}`}>
-        {/* Header */}
+        {/* Header - FIXED LAYOUT */}
         <div className="sidebar-header">
-          <div className="header-content">
-            <h2>Delivery Options</h2>
-            <button 
-              className="close-btn" 
-              onClick={() => { 
-                setOpenAddress(false); 
-                setShowForm(false); 
-                setActiveTab("delivery"); 
-              }}
-            >
-              ×
-            </button>
-          </div>
-          
-          {/* Tab Navigation */}
-          <div className="tab-navigation">
-            <button 
-              className={`tab-btn ${activeTab === "delivery" ? "active" : ""}`} 
-              onClick={() => setActiveTab("delivery")}
-            >
-              <HiMapPin className="tab-icon" />
-              Delivery
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === "pickup" ? "active" : ""}`} 
-              onClick={() => setActiveTab("pickup")}
-            >
-              <HiMapPin className="tab-icon" />
-              Pickup
-            </button>
+          <div className="header-main">
+            <div className="header-title-section">
+              <h2 className="header-title">Delivery Options</h2>
+              <button 
+                className="close-btn" 
+                onClick={() => { 
+                  setOpenAddress(false); 
+                  setShowForm(false); 
+                  setActiveTab("delivery"); 
+                }}
+              >
+                <HiX />
+              </button>
+            </div>
+            
+            {/* Tab Navigation - SEPARATE ROW */}
+            <div className="tab-navigation">
+              <button 
+                className={`tab-btn ${activeTab === "delivery" ? "active" : ""}`} 
+                onClick={() => setActiveTab("delivery")}
+              >
+                <HiMapPin className="tab-icon" />
+                Delivery
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === "pickup" ? "active" : ""}`} 
+                onClick={() => setActiveTab("pickup")}
+              >
+                <HiMapPin className="tab-icon" />
+                Pickup
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Delivery Content */}
         {activeTab === "delivery" && !showForm && (
           <div className="sidebar-content">
-            <div className="addresses-section">
+            <div className="content-section">
               <h3 className="section-title">Saved Addresses</h3>
               
               <div className="addresses-list">
@@ -177,33 +179,15 @@ const DeliverySidebar = ({
                       className={`address-card ${selectedDelivery === addr.id ? "selected" : ""}`}
                       onClick={() => handleDeliverySelect(addr.id)}
                     >
-                      <div className="address-header">
-                        <div className="address-label">
-                          <span className="label-badge">{addr.label}</span>
+                      <div className="card-header">
+                        <div className="address-type">
+                          <span className="type-badge">{addr.label}</span>
                           {addr.isDefault && <span className="default-badge">Default</span>}
-                        </div>
-                        <div className="address-actions">
-                          {!addr.isDefault && (
-                            <button 
-                              className="action-btn set-default"
-                              onClick={(e) => setAsDefaultAddress(addr.id, e)}
-                              title="Set as default"
-                            >
-                              Set Default
-                            </button>
-                          )}
-                          <button 
-                            className="action-btn remove"
-                            onClick={(e) => handleRemoveAddress(addr.id, e)}
-                            title="Remove address"
-                          >
-                            Remove
-                          </button>
                         </div>
                       </div>
                       
-                      <div className="address-details">
-                        <div className="radio-container">
+                      <div className="card-content">
+                        <div className="radio-option">
                           <input 
                             type="radio" 
                             name="delivery" 
@@ -211,14 +195,34 @@ const DeliverySidebar = ({
                             onChange={() => handleDeliverySelect(addr.id)} 
                             className="address-radio"
                           />
-                          <span className="radio-checkmark"></span>
+                          <span className="radio-custom"></span>
                         </div>
-                        <div className="address-info">
-                          <p className="address-text">{addr.address}</p>
+                        
+                        <div className="address-details">
+                          <p className="address-main">{addr.address}</p>
                           {addr.details && (
-                            <p className="address-detail">{addr.details}</p>
+                            <p className="address-extra">{addr.details}</p>
                           )}
                         </div>
+                      </div>
+
+                      <div className="card-actions">
+                        {!addr.isDefault && (
+                          <button 
+                            className="action-btn default-btn"
+                            onClick={(e) => setAsDefaultAddress(addr.id, e)}
+                            title="Set as default"
+                          >
+                            Set Default
+                          </button>
+                        )}
+                        <button 
+                          className="action-btn remove-btn"
+                          onClick={(e) => handleRemoveAddress(addr.id, e)}
+                          title="Remove address"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))
@@ -234,7 +238,7 @@ const DeliverySidebar = ({
             
             <div className="add-address-section">
               <button 
-                className="add-address-btn primary-btn"
+                className="add-address-btn"
                 onClick={() => setShowForm(true)}
               >
                 <span className="btn-icon">+</span>
@@ -255,8 +259,8 @@ const DeliverySidebar = ({
             </div>
             
             <form className="address-form" onSubmit={handleAddAddress}>
-              <div className="form-section">
-                <label className="form-label">Address Label</label>
+              <div className="form-group">
+                <label className="form-label">Address Type</label>
                 <select 
                   name="label"
                   value={formData.label}
@@ -269,7 +273,7 @@ const DeliverySidebar = ({
                 </select>
               </div>
 
-              <div className="form-section">
+              <div className="form-group">
                 <label className="form-label required">Street Address</label>
                 <input 
                   type="text" 
@@ -283,7 +287,7 @@ const DeliverySidebar = ({
               </div>
               
               <div className="form-row">
-                <div className="form-section">
+                <div className="form-group">
                   <label className="form-label required">City</label>
                   <input 
                     type="text" 
@@ -296,7 +300,7 @@ const DeliverySidebar = ({
                   />
                 </div>
                 
-                <div className="form-section">
+                <div className="form-group">
                   <label className="form-label required">ZIP Code</label>
                   <input 
                     type="text" 
@@ -310,7 +314,7 @@ const DeliverySidebar = ({
                 </div>
               </div>
               
-              <div className="form-section">
+              <div className="form-group">
                 <label className="form-label">Additional Details</label>
                 <input 
                   type="text" 
@@ -322,7 +326,7 @@ const DeliverySidebar = ({
                 />
               </div>
               
-              <button type="submit" className="save-address-btn primary-btn">
+              <button type="submit" className="submit-btn">
                 Save Address
               </button>
             </form>
@@ -332,7 +336,7 @@ const DeliverySidebar = ({
         {/* Pickup Content */}
         {activeTab === "pickup" && (
           <div className="sidebar-content">
-            <div className="pickup-section">
+            <div className="content-section">
               <h3 className="section-title">Pickup Locations</h3>
               
               <div className="pickup-list">
@@ -342,7 +346,7 @@ const DeliverySidebar = ({
                     className={`pickup-card ${selectedPickup === addr.id ? "selected" : ""}`}
                     onClick={() => handlePickupSelect(addr.id)}
                   >
-                    <div className="radio-container">
+                    <div className="radio-option">
                       <input 
                         type="radio" 
                         name="pickup" 
@@ -350,35 +354,30 @@ const DeliverySidebar = ({
                         onChange={() => handlePickupSelect(addr.id)} 
                         className="address-radio"
                       />
-                      <span className="radio-checkmark"></span>
+                      <span className="radio-custom"></span>
                     </div>
                     
-                    <div className="pickup-info">
+                    <div className="pickup-details">
                       <div className="pickup-header">
-                        <h4 className="pickup-name">{addr.name}</h4>
-                        <span className="pickup-distance">{addr.distance}</span>
+                        <h4 className="store-name">{addr.name}</h4>
+                        <span className="distance">{addr.distance}</span>
                       </div>
                       
-                      <p className="pickup-address">
-                        <HiMapPin className="info-icon" />
-                        {addr.address}
-                      </p>
-                      
-                      <div className="pickup-meta">
-                        <div className="meta-item">
+                      <div className="store-info">
+                        <div className="info-row">
+                          <HiMapPin className="info-icon" />
+                          <span>{addr.address}</span>
+                        </div>
+                        
+                        <div className="info-row">
                           <HiClock className="info-icon" />
                           <span>Open: {addr.hours}</span>
                         </div>
-                        <div className="meta-item">
+                        
+                        <div className="info-row">
                           <HiPhone className="info-icon" />
                           <span>{addr.phone}</span>
                         </div>
-                      </div>
-                      
-                      <div className="pickup-features">
-                        {addr.features?.map((feature, index) => (
-                          <span key={index} className="feature-tag">{feature}</span>
-                        ))}
                       </div>
                     </div>
                   </div>
@@ -386,19 +385,19 @@ const DeliverySidebar = ({
               </div>
             </div>
             
-            <div className="pickup-benefits">
-              <h4>Pickup Benefits</h4>
+            <div className="benefits-section">
+              <h4 className="benefits-title">Pickup Benefits</h4>
               <div className="benefits-list">
                 <div className="benefit-item">
-                  <span className="benefit-icon">🚗</span>
+                  <span className="benefit-emoji">🚗</span>
                   <span>Free pickup available</span>
                 </div>
                 <div className="benefit-item">
-                  <span className="benefit-icon">⚡</span>
+                  <span className="benefit-emoji">⚡</span>
                   <span>Ready in 30 minutes</span>
                 </div>
                 <div className="benefit-item">
-                  <span className="benefit-icon">📞</span>
+                  <span className="benefit-emoji">📞</span>
                   <span>Contact-free pickup</span>
                 </div>
               </div>
