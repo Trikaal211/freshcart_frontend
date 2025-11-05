@@ -13,7 +13,28 @@
   font-size: 18px;
   color: #666;
 }
+/* Add these styles to your checkout.css */
+.missing-address {
+  border-color: #ff4444 !important;
+  background: #fff5f5 !important;
+}
 
+.address-warning {
+  color: #ff4444;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.saved-address {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #e8ecef;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+}
 .error {
   background: #ffe6e6;
   color: #d63031;

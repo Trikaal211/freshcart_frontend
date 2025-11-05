@@ -877,31 +877,42 @@ const getCartItemsCount = () => {
     </div>
   )}
   
-  {cartItems.length > 0 && (
-    <button className="checkout-btn" onClick={() => {
-      const selectedAddress = activeTab === "delivery" 
-        ? deliveryAddresses.find(a => a.id === selectedDelivery) 
-        : pickupAddresses.find(a => a.id === selectedPickup);
-      
-      setOpenCart(false);
-      
-      // 🟢 Filter out invalid items before checkout
-      const validCartItems = cartItems.filter(item => {
-        const product = item.productId || item.product;
-        return !!product;
-      });
+// Navbar.js mein cart sidebar section ko update karo:
+{cartItems.length > 0 && (
+  <button className="checkout-btn" onClick={() => {
+    // Get selected address based on active tab
+    let selectedAddress;
+    if (activeTab === "delivery") {
+      selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
+    } else {
+      selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
+    }
+    
+    setOpenCart(false);
+    
+    // Filter out invalid items before checkout
+    const validCartItems = cartItems.filter(item => {
+      const product = item.productId || item.product;
+      return !!product;
+    });
 
-      navigate("/checkout", { 
-        state: { 
-          selectedAddress, 
-          type: activeTab,
-          cartItems: validCartItems.length > 0 ? validCartItems : cartItems
-        } 
-      });
-    }}>
-      Go to Checkout
-    </button>
-  )}
+    console.log("Navigating to checkout with:", {
+      selectedAddress,
+      type: activeTab,
+      cartItems: validCartItems
+    });
+
+    navigate("/checkout", { 
+      state: { 
+        selectedAddress: selectedAddress, 
+        type: activeTab,
+        cartItems: validCartItems.length > 0 ? validCartItems : cartItems
+      } 
+    });
+  }}>
+    Go to Checkout
+  </button>
+)}
 </div>
         </div>
 

@@ -16,11 +16,11 @@ export default function Checkout() {
   const [saving, setSaving] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Other checkout states
-  const [pickupLocation, setPickupLocation] = useState(
-    selectedAddress?.address || "Downtown Store, 123 Main St"
-  );
+  // Address states - IMPORTANT: Use the selected address from props
+  const [pickupLocation, setPickupLocation] = useState("");
   const [isEditingPickup, setIsEditingPickup] = useState(false);
+  
+  // Other checkout states
   const [phone, setPhone] = useState("");
   const [deliveryDay, setDeliveryDay] = useState("Today");
   const [deliverySlot, setDeliverySlot] = useState("10:00 - 12:00");
@@ -29,7 +29,7 @@ export default function Checkout() {
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvc, setCardCvc] = useState("");
   const [packaging, setPackaging] = useState("eco");
-  const [deliveryCost] = useState(type === "delivery" ? 40 : 0);
+  const [deliveryCost] = useState(0); // Free delivery for now
   const [orderNote, setOrderNote] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -40,6 +40,46 @@ export default function Checkout() {
   const token = localStorage.getItem("accessToken");
 
   const currency = (v) => `₹${v.toFixed(2)}`;
+
+  // Set the address when component mounts or when selectedAddress changes
+  useEffect(() => {
+    console.log("Checkout received data:", { selectedAddress, type, navCartItems });
+    
+    if (selectedAddress) {
+      console.log("Selected address received:", selectedAddress);
+      // Handle both object and string formats
+      if (typeof selectedAddress === 'object') {
+        setPickupLocation(selectedAddress.address || selectedAddress.name || JSON.stringify(selectedAddress));
+      } else {
+        setPickupLocation(selectedAddress);
+      }
+    } else {
+      // Fallback: Try to get from localStorage
+      const savedAddress = localStorage.getItem('selectedDeliveryAddress');
+      const savedAddresses = localStorage.getItem('userDeliveryAddresses');
+      
+      if (savedAddress && savedAddresses) {
+        try {
+          const addresses = JSON.parse(savedAddresses);
+          const defaultAddress = addresses.find(addr => addr.id === savedAddress);
+          if (defaultAddress) {
+            setPickupLocation(defaultAddress.address);
+            console.log("Using saved address from localStorage:", defaultAddress.address);
+          }
+        } catch (err) {
+          console.error("Error parsing saved addresses:", err);
+        }
+      }
+      
+      // Final fallback
+      if (!pickupLocation) {
+        setPickupLocation(type === "delivery" 
+          ? "Please select delivery address" 
+          : "Please select pickup location"
+        );
+      }
+    }
+  }, [selectedAddress, type]);
 
   // Fetch cart items function
   const fetchCartItems = async () => {
@@ -58,71 +98,67 @@ export default function Checkout() {
       });
       
       const cartData = res.data;
-      console.log(" Cart data:", cartData);
+      console.log("Cart data:", cartData);
       
       // Handle different response formats
       const products = cartData.products || cartData.items || [];
       setCartItems(products);
       
       // Calculate totals
-      let calculatedSubtotal = 0;
-      let calculatedSaving = 0;
-      let itemCount = 0;
-
-      products.forEach(item => {
-        const product = item.productId || item.product;
-        if (product) {
-          const actualPrice = product.discountPrice || product.price;
-          const originalPrice = product.price;
-          const quantity = item.quantity;
-          
-          calculatedSubtotal += actualPrice * quantity;
-          calculatedSaving += (originalPrice - actualPrice) * quantity;
-          itemCount += quantity;
-        }
-      });
-
-      setSubtotal(calculatedSubtotal);
-      setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
-      setTotalItems(itemCount);
+      calculateTotals(products);
     } catch (err) {
-      console.error(" Error fetching cart:", err);
+      console.error("Error fetching cart:", err);
       setError("Failed to load cart items");
     } finally {
       setLoading(false);
     }
   };
 
+  // Calculate totals function
+  const calculateTotals = (products) => {
+    let calculatedSubtotal = 0;
+    let calculatedSaving = 0;
+    let itemCount = 0;
+
+    products.forEach(item => {
+      const product = item.productId || item.product;
+      if (product) {
+        const actualPrice = product.discountPrice || product.price;
+        const originalPrice = product.price;
+        const quantity = item.quantity;
+        
+        calculatedSubtotal += actualPrice * quantity;
+        calculatedSaving += (originalPrice - actualPrice) * quantity;
+        itemCount += quantity;
+      }
+    });
+
+    setSubtotal(calculatedSubtotal);
+    setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
+    setTotalItems(itemCount);
+  };
+
   // Calculate cart totals
   useEffect(() => {
     if (navCartItems && navCartItems.length > 0) {
       setCartItems(navCartItems);
-      
-      let calculatedSubtotal = 0;
-      let calculatedSaving = 0;
-      let itemCount = 0;
-
-      navCartItems.forEach(item => {
-        const product = item.productId || item.product;
-        if (product) {
-          const actualPrice = product.discountPrice || product.price;
-          const originalPrice = product.price;
-          const quantity = item.quantity;
-          
-          calculatedSubtotal += actualPrice * quantity;
-          calculatedSaving += (originalPrice - actualPrice) * quantity;
-          itemCount += quantity;
-        }
-      });
-
-      setSubtotal(calculatedSubtotal);
-      setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
-      setTotalItems(itemCount);
+      calculateTotals(navCartItems);
       setLoading(false);
     } else {
       fetchCartItems();
     }
   }, [navCartItems]);
+
+  // Handle address change
+  const handleAddressChange = () => {
+    if (isEditingPickup) {
+      // Save the edited address
+      setIsEditingPickup(false);
+    } else {
+      // Go back to address selection
+      navigate(-1); // Go back to previous page (where DeliverySidebar is open)
+    }
+  };
 
   // Handle order creation
   const handleConfirm = async (e) => {
@@ -156,9 +192,14 @@ export default function Checkout() {
       setIsSubmitting(false);
       return;
     }
+    if (!pickupLocation || pickupLocation.includes("Please select")) {
+      setError(`Please select a ${type === "delivery" ? "delivery address" : "pickup location"}.`);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      console.log(" Starting order creation...");
+      console.log("Starting order creation...");
 
       // Prepare order items for backend
       const orderItems = cartItems.map(item => ({
@@ -167,7 +208,7 @@ export default function Checkout() {
         price: (item.productId?.discountPrice || item.productId?.price || item.product?.price)
       }));
 
-      console.log(" Order items:", orderItems);
+      console.log("Order items:", orderItems);
 
       const totalAmount = subtotal + saving + deliveryCost;
 
@@ -180,10 +221,11 @@ export default function Checkout() {
         paymentMethod: paymentMethod,
         totalAmount: totalAmount,
         orderNote: orderNote,
-        packaging: packaging
+        packaging: packaging,
+        deliveryType: type // Add delivery type to order data
       };
 
-      console.log(" Order data:", orderData);
+      console.log("Order data:", orderData);
 
       const orderResponse = await axios.post(
         "https://freshcart-backend-4wrc.onrender.com/orders",
@@ -196,16 +238,16 @@ export default function Checkout() {
         }
       );
 
-      console.log(" Order created:", orderResponse.data);
+      console.log("Order created:", orderResponse.data);
 
       // Clear cart after successful order
       try {
         await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log(" Cart cleared successfully");
+        console.log("Cart cleared successfully");
       } catch (clearError) {
-        console.warn(" Could not clear cart:", clearError);
+        console.warn("Could not clear cart:", clearError);
         // Continue even if cart clearing fails
       }
 
@@ -215,7 +257,7 @@ export default function Checkout() {
         try {
           const productId = item.productId?._id || item.productId || item.product?._id;
           if (!productId) {
-            console.warn(" No product ID found for item:", item);
+            console.warn("No product ID found for item:", item);
             return;
           }
 
@@ -233,9 +275,9 @@ export default function Checkout() {
               }
             }
           );
-          console.log(` Order added to product ${productId}`);
+          console.log(`Order added to product ${productId}`);
         } catch (productErr) {
-          console.error(` Error updating product:`, productErr);
+          console.error(`Error updating product:`, productErr);
           // Continue with other products even if one fails
         }
       });
@@ -257,14 +299,14 @@ export default function Checkout() {
       }, 3000);
 
     } catch (err) {
-      console.error(" Error placing order:", err);
+      console.error("Error placing order:", err);
       let errorMessage = "Something went wrong during checkout!";
       
       if (err.response) {
-        console.error(" Response error:", err.response.data);
+        console.error("Response error:", err.response.data);
         errorMessage = err.response.data.error || err.response.data.message || errorMessage;
       } else if (err.request) {
-        console.error(" Network error:", err.request);
+        console.error("Network error:", err.request);
         errorMessage = "Network error. Please check your connection.";
       }
       
@@ -302,13 +344,18 @@ export default function Checkout() {
                     placeholder={`Enter ${type === "delivery" ? "delivery address" : "pickup location"}`}
                   />
                 ) : (
-                  <div className="input saved-address">{pickupLocation}</div>
+                  <div className={`input saved-address ${!pickupLocation || pickupLocation.includes("Please select") ? "missing-address" : ""}`}>
+                    {pickupLocation}
+                    {!pickupLocation || pickupLocation.includes("Please select") ? (
+                      <span className="address-warning"> (Please select an address)</span>
+                    ) : null}
+                  </div>
                 )}
               </div>
               <button
                 type="button"
                 className={`change-link ${isEditingPickup ? "editing" : ""}`}
-                onClick={() => setIsEditingPickup(!isEditingPickup)}
+                onClick={handleAddressChange}
               >
                 {isEditingPickup ? "Save" : "Change"}
               </button>
@@ -479,7 +526,7 @@ export default function Checkout() {
           
           <button 
             className="confirm-btn" 
-            disabled={cartItems.length === 0 || isSubmitting || !ageConfirmed}
+            disabled={cartItems.length === 0 || isSubmitting || !ageConfirmed || !pickupLocation || pickupLocation.includes("Please select")}
             type="submit"
           >
             {isSubmitting ? "Placing Order..." : `Confirm Order →`}
