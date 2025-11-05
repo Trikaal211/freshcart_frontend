@@ -51,19 +51,20 @@ const App = () => {
     }
   }, [location]);
 
-  // 🟣 Loading screen aesthetic
+  //  Loading screen aesthetic
   if (loading) {
     return (
       <div className="loader-container">
         <div className="loader-circle"></div>
-        <h2>⚙️ Waking up backend...</h2>
-        <p>Please wait around 20–30 seconds</p>
+        <h2> Waking up backend...</h2>
+        <p>i,ll Appriciate your kindness </p>
       </div>
     );
   }
 
   return (
     <>
+      <Productlist />
 
       <div className="container">
         {showScrollTop && (
@@ -88,8 +89,6 @@ const App = () => {
         <Categories />
         <Lifestyle />
         <SpecialProducts />
-              <Productlist />
-
         <div id="recipes"></div>
         <Recipes />
         <Contact />
