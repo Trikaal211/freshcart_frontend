@@ -19,7 +19,7 @@ const App = () => {
   useEffect(() => {
     const wakeServer = async () => {
       try {
-        await axios.get("https://freshcart-backend-4wrc.onrender.com/health");
+        await axios.get("https://freshcart-backend-4wrc.onrender.com/products/popular");
         setLoading(false);
       } catch {
         console.log("⏳ Backend waking up...");
