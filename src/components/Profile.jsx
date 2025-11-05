@@ -96,7 +96,7 @@ const Profile = () => {
   const markAsShipped = async (orderId) => {
     try {
    await axios.patch(
-  `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,
+      `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,
   { status: "shipped" },
   {
     withCredentials: true,
@@ -104,7 +104,7 @@ const Profile = () => {
       Authorization: `Bearer ${token}`,
     },
   }
-);
+  );
       // Update UI instantly
       setReceivedOrders((prev) =>
         prev.filter((o) => o._id !== orderId)
