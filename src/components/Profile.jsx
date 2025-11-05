@@ -121,46 +121,32 @@ const Profile = () => {
     }
   };
 
-  // Mark order as shipped - with temporary orderId handling
-  const markAsShipped = async (order) => {
-    try {
-      if (!order.productId) {
-        alert("❌ Error: Product ID not found");
-        return;
-      }
-      
-      // Check if it's a temporary orderId
-      if (order.orderId.toString().startsWith('temp-order-')) {
-        alert("❌ This order has a temporary ID. Please wait for orderId to be properly saved.");
-        return;
-      }
-
-      const response = await axios.patch(
-        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${order.orderId}/status`,
-        { status: "shipped" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("✅ API Response:", response.data);
-
-      setReceivedOrders((prev) =>
-        prev.map((o) => 
-          o.orderId === order.orderId ? { ...o, status: "shipped" } : o
-        )
-      );
-
-      alert("✅ Order marked as shipped successfully!");
-
-    } catch (err) {
-      console.error("❌ Error updating order:", err);
-      alert("Failed to update order status: " + (err.response?.data?.error || err.message));
+// mark order as shipped
+const markAsShipped = async (order) => {
+  try {
+    if (!order.orderId || order.orderId.toString().startsWith("temp-order-")) {
+      alert("This order is missing a real orderId yet. Refresh products/orders.");
+      return;
     }
-  };
+    const res = await axios.patch(
+      `https://freshcart-backend-4wrc.onrender.com/orders/${order.orderId}/status`,
+      { status: "shipped" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("Status update response:", res.data);
+
+    // update UI locally
+    setReceivedOrders(prev => prev.map(o => (o.orderId?.toString() === order.orderId?.toString() ? { ...o, status: "shipped" } : o)));
+
+    // also optionally refresh my products to pick latest statuses
+    await refreshMyProducts();
+    alert("Order marked as shipped.");
+  } catch (err) {
+    console.error("Failed to mark shipped:", err);
+    alert("Failed to mark order shipped: " + (err.response?.data?.error || err.message));
+  }
+};
 
   // Debug function
   const debugOrders = () => {
