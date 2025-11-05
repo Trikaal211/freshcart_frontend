@@ -242,10 +242,17 @@ const Navbar = () => {
   }
 
   // Calculate total cart items count
-  const getCartItemsCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
-
+// Calculate total cart items count - IMPROVED
+const getCartItemsCount = () => {
+  return cartItems.reduce((total, item) => {
+    // 🟢 Only count items that have valid product data
+    const product = item.productId || item.product;
+    if (product) {
+      return total + item.quantity;
+    }
+    return total;
+  }, 0);
+};
   // Handle user icon click
   const handleUserIconClick = () => {
     const isSmallScreen = window.innerWidth <= 348;
@@ -808,53 +815,95 @@ const Navbar = () => {
           </div>
 
           {/* CART SIDEBAR */}
-          <div className={`cart-side ${cart? "open":""}`}>
-            <div className="cart-header">
-              <h2>Your Cart ({getCartItemsCount()} items)</h2>
-              <button onClick={()=>setOpenCart(false)}>×</button>
-            </div>
-            {loadingCart ? <p>Loading cart...</p> : cartItems.length===0 ? <p>Your cart is empty</p> : (
-              <div className="cart-items">
-                {cartItems.map(item=>{
-                  const product = item.productId; if(!product) return null;
-                  return (
-                    <div key={item._id} className="cart-item">
-                      <img src={product.images?.[0] || "/fallback.png"} alt={product.title}/>
-                      <div className="cart-item-info">
-                        <h4>{product.title}</h4>
-                        <div className="quantity-control">
-                          <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
-                          <span>{item.quantity}</span>
-                          <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
-                        </div>
-                        <p>Qty: {item.quantity}</p>
-                        <p>Total: ${( (product.discountPrice || product.price) * item.quantity ).toFixed(2)}</p>
-                      </div>
-                      <button onClick={()=>handleDelete(item._id)}>delete</button>
-                    </div>
-                  )
-                })}
+       // CART SIDEBAR - FIXED VERSION
+<div className={`cart-side ${cart? "open":""}`}>
+  <div className="cart-header">
+    <h2>Your Cart ({getCartItemsCount()} items)</h2>
+    <button onClick={()=>setOpenCart(false)}>×</button>
+  </div>
+  
+  {loadingCart ? (
+    <p>Loading cart...</p>
+  ) : cartItems.length === 0 ? (
+    <p>Your cart is empty</p>
+  ) : (
+    <div className="cart-items">
+      {cartItems.map(item => {
+        // 🟢 CORRECTED: Handle different product structures
+        const product = item.productId || item.product;
+        
+        // 🟢 If product data is missing, show fallback UI
+        if (!product) {
+          return (
+            <div key={item._id} className="cart-item">
+              <img src="https://via.placeholder.com/60x60?text=Product" alt="Product not available"/>
+              <div className="cart-item-info">
+                <h4>Product not available</h4>
+                <div className="quantity-control">
+                  <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
+                  <span>{item.quantity}</span>
+                  <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+                </div>
+                <p>Qty: {item.quantity}</p>
+                <p>Total: ₹{(item.price * item.quantity).toFixed(2)}</p>
               </div>
-            )}
-            {cartItems.length>0 && (
-              <button className="checkout-btn" onClick={() => {
-                const selectedAddress = activeTab === "delivery" 
-                  ? deliveryAddresses.find(a => a.id === selectedDelivery) 
-                  : pickupAddresses.find(a => a.id === selectedPickup);
-                            { setOpenCart(false)};
+              <button onClick={()=>handleDelete(item._id)}>Delete</button>
+            </div>
+          );
+        }
 
-                navigate("/checkout", { 
-                  state: { 
-                    selectedAddress, 
-                    type: activeTab,
-                    cartItems: cartItems
-                  } 
-                  
-                });
-              }}>Go to Checkout</button>
-              
-            )}
+        const productPrice = product.discountPrice || product.price || item.price || 0;
+        const productTitle = product.title || "Product";
+        const productImage = product.images?.[0] || "https://via.placeholder.com/60x60?text=Product";
+
+        return (
+          <div key={item._id} className="cart-item">
+            <img src={productImage} alt={productTitle} onError={(e) => {
+              e.target.src = "https://via.placeholder.com/60x60?text=Product";
+            }}/>
+            <div className="cart-item-info">
+              <h4>{productTitle}</h4>
+              <div className="quantity-control">
+                <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
+                <span>{item.quantity}</span>
+                <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+              </div>
+              <p>Qty: {item.quantity}</p>
+              <p>Total: ₹{(productPrice * item.quantity).toFixed(2)}</p>
+            </div>
+            <button onClick={()=>handleDelete(item._id)}>Delete</button>
           </div>
+        );
+      })}
+    </div>
+  )}
+  
+  {cartItems.length > 0 && (
+    <button className="checkout-btn" onClick={() => {
+      const selectedAddress = activeTab === "delivery" 
+        ? deliveryAddresses.find(a => a.id === selectedDelivery) 
+        : pickupAddresses.find(a => a.id === selectedPickup);
+      
+      setOpenCart(false);
+      
+      // 🟢 Filter out invalid items before checkout
+      const validCartItems = cartItems.filter(item => {
+        const product = item.productId || item.product;
+        return !!product;
+      });
+
+      navigate("/checkout", { 
+        state: { 
+          selectedAddress, 
+          type: activeTab,
+          cartItems: validCartItems.length > 0 ? validCartItems : cartItems
+        } 
+      });
+    }}>
+      Go to Checkout
+    </button>
+  )}
+</div>
         </div>
 
         {/* MOBILE SEARCH SIDEBAR */}
