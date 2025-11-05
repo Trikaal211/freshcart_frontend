@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { HiMapPin, HiClock, HiPhone, HiX } from "react-icons/hi";
+import { HiClock, HiPhone, HiX } from "react-icons/hi";
+import { HiMapPin } from "react-icons/hi2";
 import "./deliverysidebar.css";
 
 const DeliverySidebar = ({
