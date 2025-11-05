@@ -44,7 +44,7 @@
   z-index: 10;
 }
 
-.header-main {
+.headeru-main {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -53,6 +53,7 @@
 /* Title and Close Button - FIRST ROW */
 .header-title-section {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   width: 100%;

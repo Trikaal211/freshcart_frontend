@@ -130,7 +130,7 @@ const DeliverySidebar = ({
       <div className={`delivery-sidebar ${openAddress ? "open" : ""}`}>
         {/* Header - FIXED LAYOUT */}
         <div className="sidebar-header">
-          <div className="header-main">
+          <div className="headeru-main">
             <div className="header-title-section">
               <h2 className="header-title">Delivery Options</h2>
               <button 
