@@ -293,7 +293,7 @@ const Profile = () => {
           </div>
 
           <div className="received-orders">
-            <h3>📬 Received Orders ({receivedOrders.length})</h3>
+            <h3>Received Orders ({receivedOrders.length})</h3>
             <div className="order-grid">
               {receivedOrders.length === 0 ? (
                 <p>No received orders yet.</p>
