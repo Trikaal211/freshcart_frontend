@@ -56,18 +56,18 @@ const Profile = () => {
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // 🟢 FIXED: Extract received orders from products with proper structure
+        //  FIXED: Extract received orders from products with proper structure
         const allOrders = [];
         productsRes.data.forEach((product) => {
           if (product.orders && product.orders.length > 0) {
             product.orders.forEach((order) => {
               allOrders.push({
                 ...order,
-                _id: order._id, // 🟢 Include subdocument _id
-                productId: product._id, // 🟢 Include product ID for API call
+                _id: order._id, //  Include subdocument _id
+                productId: product._id, //  Include product ID for API call
                 productTitle: product.title,
                 productImage: product.images?.[0],
-                // 🟢 Include buyer information if available
+                //  Include buyer information if available
                 buyerName: order.buyerName,
                 buyerEmail: order.buyerEmail,
                 address: order.address,
@@ -95,7 +95,7 @@ const Profile = () => {
       );
       setMyProducts(res.data);
       
-      // 🟢 FIXED: Also refresh received orders
+      //  FIXED: Also refresh received orders
       const allOrders = [];
       res.data.forEach((product) => {
         if (product.orders && product.orders.length > 0) {
@@ -120,7 +120,7 @@ const Profile = () => {
     }
   };
 
-  // 🟢 FIXED: Mark order as shipped - CORRECTED VERSION
+  //  FIXED: Mark order as shipped - CORRECTED VERSION
   const markAsShipped = async (order) => {
     try {
       console.log("Marking order as shipped:", order);
@@ -130,7 +130,7 @@ const Profile = () => {
         return;
       }
 
-      // 🟢 Use the subdocument _id (order._id) for product order update
+      // Use the subdocument _id (order._id) for product order update
       const orderId = order._id;
       if (!orderId) {
         alert("Error: Order ID not found");
@@ -199,7 +199,7 @@ const Profile = () => {
 
   return (
     <div className="profile-page">
-      <h2 className="title">👤 Profile</h2>
+      <h2 className="title">Profile</h2>
 
       {/* Tabs */}
       <div className="profile-tabs">
@@ -230,7 +230,7 @@ const Profile = () => {
       {/* My Cart */}
       {activeTab === "cart" && (
         <section>
-          <h3>🛒 My Cart</h3>
+          <h3>My Cart</h3>
           {cart.length === 0 ? <p>No items in cart.</p> :
             cart.map((c) => (
               <div key={c._id} className="cart-item">
@@ -243,7 +243,7 @@ const Profile = () => {
       {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3>📦 My Orders</h3>
+          <h3> My Orders</h3>
           {myOrders.length === 0 ? (
             <p>You haven't placed any orders yet.</p>
           ) : (
@@ -263,13 +263,13 @@ const Profile = () => {
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3>🛍️ My Uploaded Products ({myProducts.length})</h3>
+            <h3> My Uploaded Products ({myProducts.length})</h3>
             <div>
               <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
                 Debug
               </button>
               <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄 Refresh
+                 Refresh
               </button>
             </div>
           </div>
@@ -319,10 +319,10 @@ const Profile = () => {
                     </div>
                     <button
                       className="ship-btn"
-                      onClick={() => markAsShipped(order)} /* 🟢 Pass entire order object */
+                      onClick={() => markAsShipped(order)} /* Pass entire order object */
                       disabled={order.status === "shipped"}
                     >
-                      {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
+                      {order.status === "shipped" ? "Shipped" : " Mark as Shipped"}
                     </button>
                   </div>
                 ))
