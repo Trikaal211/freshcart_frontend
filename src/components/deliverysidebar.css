@@ -630,7 +630,7 @@
   background: #f1f1f1;
 }
 
-.sidebar-content::-webkit-scrollbar-thumb {
+.sidebar-content::-webkit-scrollbar-thumb {      
   background: #c1c1c1;
   border-radius: 3px;
 }
