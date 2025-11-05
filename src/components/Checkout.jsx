@@ -54,69 +54,53 @@ export default function Checkout() {
   };
 
   // Fetch cart items function
-// Fetch cart items function - IMPROVED
-const fetchCartItems = async () => {
-  if (!token) {
-    setError("Please login to continue checkout");
-    setLoading(false);
-    return;
-  }
+  const fetchCartItems = async () => {
+    if (!token) {
+      setError("Please login to continue checkout");
+      setLoading(false);
+      return;
+    }
 
-  try {
-    setLoading(true);
-    const res = await axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
-      headers: { 
-        Authorization: `Bearer ${token}` 
-      }
-    });
-    
-    const cartData = res.data;
-    console.log("🛒 Raw cart data:", cartData);
-    
-    const products = cartData.products || cartData.items || [];
-    console.log("🛒 Processed cart items:", products);
-    
-    // 🟢 DEBUG: Check product structure
-    products.forEach((item, index) => {
-      console.log(`🛒 Cart item ${index}:`, {
-        hasProductId: !!item.productId,
-        hasProduct: !!item.product,
-        productId_type: typeof item.productId,
-        product_type: typeof item.product,
-        fullItem: item
+    try {
+      setLoading(true);
+      const res = await axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        }
       });
-    });
-    
-    setCartItems(products);
-    
-    // Calculate totals
-    let calculatedSubtotal = 0;
-    let calculatedSaving = 0;
-    let itemCount = 0;
+      
+      const cartData = res.data;
+      const products = cartData.products || cartData.items || [];
+      setCartItems(products);
+      
+      // Calculate totals
+      let calculatedSubtotal = 0;
+      let calculatedSaving = 0;
+      let itemCount = 0;
 
-    products.forEach(item => {
-      const product = item.productId || item.product;
-      if (product) {
-        const actualPrice = product.discountPrice || product.price;
-        const originalPrice = product.price;
-        const quantity = item.quantity;
-        
-        calculatedSubtotal += actualPrice * quantity;
-        calculatedSaving += (originalPrice - actualPrice) * quantity;
-        itemCount += quantity;
-      }
-    });
+      products.forEach(item => {
+        const product = item.productId || item.product;
+        if (product) {
+          const actualPrice = product.discountPrice || product.price;
+          const originalPrice = product.price;
+          const quantity = item.quantity;
+          
+          calculatedSubtotal += actualPrice * quantity;
+          calculatedSaving += (originalPrice - actualPrice) * quantity;
+          itemCount += quantity;
+        }
+      });
 
-    setSubtotal(calculatedSubtotal);
-    setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
-    setTotalItems(itemCount);
-  } catch (err) {
-    console.error("❌ Error fetching cart:", err);
-    setError("Failed to load cart items");
-  } finally {
-    setLoading(false);
-  }
-};
+      setSubtotal(calculatedSubtotal);
+      setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
+      setTotalItems(itemCount);
+    } catch (err) {
+      console.error("❌ Error fetching cart:", err);
+      setError("Failed to load cart items");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate cart totals
   useEffect(() => {
@@ -155,264 +139,161 @@ const fetchCartItems = async () => {
   }, [navCartItems]);
 
   // Handle order creation
-// Handle order creation - FIXED VERSION
-// Handle order creation - FIXED VERSION
-const handleConfirm = async (e) => {
-  e.preventDefault();
-  setError("");
-  setIsSubmitting(true);
-  
-  // Validation
-  if (!phone.trim()) {
-    setError("Please enter a phone number.");
-    setIsSubmitting(false);
-    return;
-  }
-  if (phone.trim().length < 10) {
-    setError("Please enter a valid phone number.");
-    setIsSubmitting(false);
-    return;
-  }
-  if (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvc)) {
-    setError("Please fill card details.");
-    setIsSubmitting(false);
-    return;
-  }
-  if (!ageConfirmed) {
-    setError("Please confirm your age.");
-    setIsSubmitting(false);
-    return;
-  }
-  if (cartItems.length === 0) {
-    setError("Your cart is empty.");
-    setIsSubmitting(false);
-    return;
-  }
-  if (!user) {
-    setError("User information not available.");
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    console.log(" Starting order creation...");
-    console.log(" Cart items:", cartItems);
-
-    // 🟢 CORRECTED: Filter out invalid items and prepare order items
-    const validCartItems = cartItems.filter(item => {
-      let productId;
-      
-      if (item.productId && typeof item.productId === 'object') {
-        productId = item.productId._id;
-      } else if (item.productId) {
-        productId = item.productId;
-      } else if (item.product && typeof item.product === 'object') {
-        productId = item.product._id;
-      } else if (item.product) {
-        productId = item.product;
-      }
-
-      const isValid = !!productId && item.quantity > 0;
-      
-      if (!isValid) {
-        console.warn("❌ Removing invalid cart item:", item);
-      }
-      
-      return isValid;
-    });
-
-    if (validCartItems.length === 0) {
-      setError("Your cart contains invalid items. Please check your cart.");
+  const handleConfirm = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+    
+    // Validation
+    if (!phone.trim()) {
+      setError("Please enter a phone number.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (phone.trim().length < 10) {
+      setError("Please enter a valid phone number.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvc)) {
+      setError("Please fill card details.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!ageConfirmed) {
+      setError("Please confirm your age.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (cartItems.length === 0) {
+      setError("Your cart is empty.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!user) {
+      setError("User information not available.");
       setIsSubmitting(false);
       return;
     }
 
-    console.log(" Valid cart items:", validCartItems);
-
-    const orderItems = validCartItems.map(item => {
-      let productId;
-      
-      // Check different possible structures
-      if (item.productId && typeof item.productId === 'object') {
-        productId = item.productId._id;
-      } else if (item.productId) {
-        productId = item.productId;
-      } else if (item.product && typeof item.product === 'object') {
-        productId = item.product._id;
-      } else if (item.product) {
-        productId = item.product;
-      }
-
-      const price = item.productId?.discountPrice || item.productId?.price || item.product?.price || item.price || 0;
-
-      return {
-        productId: productId,
-        quantity: item.quantity,
-        price: price
-      };
-    });
-
-    console.log(" Final order items:", orderItems);
-
-    // 🟢 Recalculate totals based on valid items only
-    let recalculatedSubtotal = 0;
-    let recalculatedSaving = 0;
-    
-    validCartItems.forEach(item => {
-      const product = item.productId || item.product;
-      if (product) {
-        const actualPrice = product.discountPrice || product.price || item.price || 0;
-        const originalPrice = product.price || actualPrice;
-        const quantity = item.quantity;
-        
-        recalculatedSubtotal += actualPrice * quantity;
-        recalculatedSaving += (originalPrice - actualPrice) * quantity;
-      }
-    });
-
-    const totalAmount = recalculatedSubtotal + recalculatedSaving + deliveryCost;
-
-    // Create order in backend
-    const orderData = {
-      address: pickupLocation,
-      items: orderItems,
-      phone: phone.trim(),
-      deliveryTime: `${deliveryDay} · ${deliverySlot}`,
-      paymentMethod: paymentMethod,
-      totalAmount: totalAmount,
-      orderNote: orderNote,
-      packaging: packaging
-    };
-
-    console.log(" Order data:", orderData);
-
-    const orderResponse = await axios.post(
-      "https://freshcart-backend-4wrc.onrender.com/orders",
-      orderData,
-      {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    console.log(" Order created successfully:", orderResponse.data);
-
-    const createdOrder = orderResponse.data.order || orderResponse.data;
-    const orderId = createdOrder._id;
-
-    // 🟢 Update products with order information (only valid items)
-    console.log("Updating products with order info...");
-    
-    const updatePromises = validCartItems.map(async (item, index) => {
-      try {
-        let productId;
-        
-        if (item.productId && typeof item.productId === 'object') {
-          productId = item.productId._id;
-        } else if (item.productId) {
-          productId = item.productId;
-        } else if (item.product && typeof item.product === 'object') {
-          productId = item.product._id;
-        } else if (item.product) {
-          productId = item.product;
-        }
-
-        if (!productId) {
-          console.error(`❌ No product ID found for valid item ${index}:`, item);
-          return;
-        }
-
-        console.log(` Updating product ${productId} with order ${orderId}`);
-
-        const productOrderData = {
-          quantity: item.quantity,
-          orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price || item.price || 0,
-          orderId: orderId,
-          buyerName: `${user.firstName} ${user.lastName}`,
-          buyerEmail: user.email,
-          address: pickupLocation,
-          phone: phone.trim()
-        };
-
-        await axios.post(
-          `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
-          productOrderData,
-          {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }
-          }
-        );
-        
-        console.log(`✅ Order added to product ${productId}`);
-        
-      } catch (productErr) {
-        console.error(`❌ Error updating product ${index}:`, productErr.response?.data || productErr.message);
-        // Don't throw error here, continue with other products
-      }
-    });
-
-    await Promise.allSettled(updatePromises);
-    console.log("✅ All product updates completed");
-
-    // Clear cart after successful order
     try {
-      await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      console.log("🛒 Cart cleared successfully");
-      
-      // 🟢 Also update local state
-      setCartItems([]);
-      setSubtotal(0);
-      setSaving(0);
-      setTotalItems(0);
-      
-    } catch (clearError) {
-      console.warn("⚠️ Could not clear cart:", clearError);
-      // Continue even if cart clearing fails
-    }
+      console.log(" Starting order creation...");
 
-    // Show success and redirect
-    setConfirmed(true);
-    setError("");
-    
-    // Redirect to profile after 3 seconds
-    setTimeout(() => {
-      navigate("/profile", { 
-        state: { 
-          message: "Order placed successfully!",
-          orderId: orderId
+      // Prepare order items for backend
+      const orderItems = cartItems.map(item => ({
+        productId: (item.productId?._id || item.productId || item.product?._id),
+        quantity: item.quantity,
+        price: (item.productId?.discountPrice || item.productId?.price || item.product?.price)
+      }));
+
+      console.log(" Order items:", orderItems);
+
+      const totalAmount = subtotal + saving + deliveryCost;
+
+      // Create order in backend
+      const orderData = {
+        address: pickupLocation,
+        items: orderItems,
+        phone: phone.trim(),
+        deliveryTime: `${deliveryDay} · ${deliverySlot}`,
+        paymentMethod: paymentMethod,
+        totalAmount: totalAmount,
+        orderNote: orderNote,
+        packaging: packaging
+      };
+
+      console.log(" Order data:", orderData);
+
+      const orderResponse = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/orders",
+        orderData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log(" Order created:", orderResponse.data);
+
+      // Clear cart after successful order
+      try {
+        await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("🛒 Cart cleared successfully");
+      } catch (clearError) {
+        console.warn("⚠️ Could not clear cart:", clearError);
+      }
+
+      // Update products with order information
+      console.log("Updating products with order info...");
+      const updatePromises = cartItems.map(async (item) => {
+        try {
+          const productId = item.productId?._id || item.productId || item.product?._id;
+          if (!productId) {
+            console.warn(" No product ID found for item:", item);
+            return;
+          }
+
+          await axios.post(
+            `https://freshcart-backend-4wrc.onrender.com/products/${productId}/order`,
+            {
+              quantity: item.quantity,
+              orderPrice: item.productId?.discountPrice || item.productId?.price || item.product?.price,
+              orderId: orderResponse.data.order?._id || orderResponse.data._id,
+              buyerName: `${user.firstName} ${user.lastName}`,
+              buyerEmail: user.email,
+              address: pickupLocation,
+              phone: phone.trim()
+            },
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              }
+            }
+          );
+          console.log(` Order added to product ${productId}`);
+        } catch (productErr) {
+          console.error(` Error updating product:`, productErr);
         }
       });
-    }, 3000);
 
-  } catch (err) {
-    console.error("❌ Error placing order:", err);
-    let errorMessage = "Something went wrong during checkout!";
-    
-    if (err.response) {
-      console.error(" Response error:", err.response.data);
-      errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+      await Promise.allSettled(updatePromises);
+
+      // Show success and redirect
+      setConfirmed(true);
+      setError("");
       
-      if (err.response.data.error?.includes('Product not found')) {
-        errorMessage = "One of the products in your cart is no longer available. Please check your cart.";
+      // Redirect to profile after 3 seconds
+      setTimeout(() => {
+        navigate("/profile", { 
+          state: { 
+            message: "Order placed successfully!",
+            orderId: orderResponse.data.order?._id || orderResponse.data._id
+          }
+        });
+      }, 3000);
+
+    } catch (err) {
+      console.error(" Error placing order:", err);
+      let errorMessage = "Something went wrong during checkout!";
+      
+      if (err.response) {
+        console.error(" Response error:", err.response.data);
+        errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+      } else if (err.request) {
+        console.error(" Network error:", err.request);
+        errorMessage = "Network error. Please check your connection.";
       }
-    } else if (err.request) {
-      console.error(" Network error:", err.request);
-      errorMessage = "Network error. Please check your connection.";
-    } else {
-      console.error(" Other error:", err.message);
+      
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setError(errorMessage);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (

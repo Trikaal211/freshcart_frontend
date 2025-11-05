@@ -271,45 +271,43 @@ const Profile = () => {
             )}
           </div>
 
-      // Received Orders section को update करें
-<div className="received-orders">
-  <h3>📬 Received Orders ({receivedOrders.length})</h3>
-  <div className="order-grid">
-    {receivedOrders.length === 0 ? (
-      <p>No received orders yet.</p>
-    ) : (
-      receivedOrders.map((order) => (
-        <div key={order._id} className="order-card received-order"> {/* 🟢 order._id use करें */}
-          <img
-            src={order.productImage || "https://via.placeholder.com/80"}
-            alt={order.productTitle}
-          />
-          <div className="order-info">
-            <h4>{order.productTitle}</h4>
-            <p><strong>Order ID:</strong> {order._id}</p> {/* 🟢 order._id show करें */}
-            <p><strong>Main Order ID:</strong> {order.orderId}</p>
-            <p><strong>Quantity:</strong> {order.quantity}</p>
-            <p><strong>Buyer Name:</strong> {order.buyerName}</p>
-            <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
-            <p><strong>Phone:</strong> {order.phone}</p>
-            <p><strong>Address:</strong> {order.address}</p>
-            <p><strong>Status:</strong> 
-              <span className={`status ${order.status}`}>{order.status}</span>
-            </p>
-            <p><strong>Product ID:</strong> {order.productId}</p>
+          <div className="received-orders">
+            <h3>📬 Received Orders ({receivedOrders.length})</h3>
+            <div className="order-grid">
+              {receivedOrders.length === 0 ? (
+                <p>No received orders yet.</p>
+              ) : (
+                receivedOrders.map((order) => (
+                  <div key={order.orderId} className="order-card received-order">
+                    <img
+                      src={order.productImage || "https://via.placeholder.com/80"}
+                      alt={order.productTitle}
+                    />
+                    <div className="order-info">
+                      <h4>{order.productTitle}</h4>
+                      <p><strong>Order ID:</strong> {order.orderId}</p>
+                      <p><strong>Quantity:</strong> {order.quantity}</p>
+                      <p><strong>Buyer Name:</strong> {order.buyerName}</p>
+                      <p><strong>Buyer Email:</strong> {order.buyerEmail}</p>
+                      <p><strong>Phone:</strong> {order.phone}</p>
+                      <p><strong>Address:</strong> {order.address}</p>
+                      <p><strong>Status:</strong> 
+                        <span className={`status ${order.status}`}>{order.status}</span>
+                      </p>
+                      <p><strong>Product ID:</strong> {order.productId}</p>
+                    </div>
+                    <button
+                      className="ship-btn"
+                      onClick={() => markAsShipped(order)}
+                      disabled={order.status === "shipped"}
+                    >
+                      {order.status === "shipped" ? " Shipped" : " Mark as Shipped"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-          <button
-            className="ship-btn"
-            onClick={() => markAsShipped(order)}
-            disabled={order.status === "shipped"}
-          >
-            {order.status === "shipped" ? "Shipped" : "Mark as Shipped"}
-          </button>
-        </div>
-      ))
-    )}
-  </div>
-</div>
         </section>
       )}
     </div>
