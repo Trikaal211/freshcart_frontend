@@ -815,7 +815,6 @@ const getCartItemsCount = () => {
           </div>
 
           {/* CART SIDEBAR */}
-       // CART SIDEBAR - FIXED VERSION
 <div className={`cart-side ${cart? "open":""}`}>
   <div className="cart-header">
     <h2>Your Cart ({getCartItemsCount()} items)</h2>
