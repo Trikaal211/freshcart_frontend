@@ -6,7 +6,7 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [myProducts, setMyProducts] = useState([]);
-  const [receivedOrders, setReceivedOrders] = useState([]);
+  const [receivedOrders, setReceivedOrders] = useState([]); // ✅ Separate orders list
   const [myOrders, setMyOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
@@ -23,8 +23,6 @@ const Profile = () => {
           return;
         }
 
-        console.log("🔄 Fetching profile data...");
-
         // Fetch user
         const userRes = await axios.get(
           "https://freshcart-backend-4wrc.onrender.com/users/me",
@@ -34,32 +32,46 @@ const Profile = () => {
 
         // Fetch all data parallelly
         const [cartRes, productsRes, ordersRes] = await Promise.all([
-          axios.get("https://freshcart-backend-4wrc.onrender.com/cart", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: { products: [] } })),
+          axios
+            .get("https://freshcart-backend-4wrc.onrender.com/cart", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .catch(() => ({ data: { products: [] } })),
 
-          axios.get("https://freshcart-backend-4wrc.onrender.com/products/my-products", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch((err) => { 
-            console.error("❌ Error fetching products:", err);
-            return { data: [] };
-          }),
+          axios
+            .get(
+              "https://freshcart-backend-4wrc.onrender.com/products/my-products",
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+            .catch(() => ({ data: [] })),
 
-          axios.get("https://freshcart-backend-4wrc.onrender.com/orders/my-orders", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: [] })),
+          axios
+            .get("https://freshcart-backend-4wrc.onrender.com/orders/my-orders", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .catch(() => ({ data: [] })),
         ]);
 
         setCart(cartRes.data.products || []);
         setMyProducts(productsRes.data || []);
         setMyOrders(ordersRes.data || []);
 
-        // ✅ TEMPORARY FIX: Show orders even without orderId
-        const allOrders = extractReceivedOrders(productsRes.data);
-        console.log("📬 Final received orders:", allOrders);
+        // Extract received orders from products
+        const allOrders = [];
+        productsRes.data.forEach((p) => {
+          if (p.orders && p.orders.length > 0) {
+            p.orders.forEach((o) =>
+              allOrders.push({
+                ...o,
+                productTitle: p.title,
+                productImage: p.images?.[0],
+              })
+            );
+          }
+        });
         setReceivedOrders(allOrders);
       } catch (err) {
-        console.error("❌ Profile fetch error:", err);
+        console.error(err);
         setError("Failed to load profile data");
       } finally {
         setLoading(false);
@@ -68,100 +80,62 @@ const Profile = () => {
     fetchData();
   }, [token]);
 
-  // ✅ TEMPORARY FIX: Extract orders even without orderId
-  const extractReceivedOrders = (products) => {
-    if (!products || !Array.isArray(products)) {
-      return [];
-    }
-
-    const allOrders = [];
-    
-    products.forEach((product) => {
-      if (product.orders && product.orders.length > 0) {
-        product.orders.forEach((order, index) => {
-          // ✅ TEMPORARY: Include orders even without orderId
-          const orderData = {
-            ...order,
-            productId: product._id,
-            productTitle: product.title,
-            productImage: product.images?.[0],
-            buyerName: order.buyerName || "Customer",
-            buyerEmail: order.buyerEmail || "No email",
-            address: order.address || "Address not provided",
-            phone: order.phone || "Phone not provided",
-            // ✅ TEMPORARY: Generate temporary orderId if missing
-            orderId: order.orderId || `temp-order-${product._id}-${index}`,
-            status: order.status || "pending",
-            quantity: order.quantity || 1,
-            orderPrice: order.orderPrice || 0
-          };
-
-          allOrders.push(orderData);
-        });
-      }
-    });
-    
-    return allOrders;
-  };
-
   const refreshMyProducts = async () => {
     try {
       const res = await axios.get(
         "https://freshcart-backend-4wrc.onrender.com/products/my-products",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMyProducts(res.data || []);
-      
-      const allOrders = extractReceivedOrders(res.data);
-      setReceivedOrders(allOrders);
-      alert("✅ Products refreshed!");
+      setMyProducts(res.data);
     } catch (err) {
-      console.error("❌ Refresh failed", err);
-      alert("❌ Refresh failed");
+      console.error("Refresh failed", err);
     }
   };
 
-// mark order as shipped
-const markAsShipped = async (order) => {
-  try {
-    if (!order.orderId || order.orderId.toString().startsWith("temp-order-")) {
-      alert("This order is missing a real orderId yet. Refresh products/orders.");
-      return;
-    }
-    const res = await axios.patch(
-      `https://freshcart-backend-4wrc.onrender.com/orders/${order.orderId}/status`,
-      { status: "shipped" },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    console.log("Status update response:", res.data);
-
-    // update UI locally
-    setReceivedOrders(prev => prev.map(o => (o.orderId?.toString() === order.orderId?.toString() ? { ...o, status: "shipped" } : o)));
-
-    // also optionally refresh my products to pick latest statuses
-    await refreshMyProducts();
-    alert("Order marked as shipped.");
-  } catch (err) {
-    console.error("Failed to mark shipped:", err);
-    alert("Failed to mark order shipped: " + (err.response?.data?.error || err.message));
+  // ✅ Mark order as shipped
+  const markAsShipped = async (orderId) => {
+    try {
+   await axios.patch(
+  `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,
+  { status: "shipped" },
+  {
+    withCredentials: true,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   }
-};
+);
+      // Update UI instantly
+      setReceivedOrders((prev) =>
+        prev.filter((o) => o._id !== orderId)
+      );
+      setMyOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, status: "shipped" } : o))
+      );
 
-  // Debug function
-  const debugOrders = () => {
-    console.log("=== 🐛 DEBUG ORDERS ===");
-    console.log("My Products:", myProducts);
-    console.log("Received Orders:", receivedOrders);
+      console.log(" Order marked as shipped");
+    } catch (err) {
+      console.error("Error updating order:", err);
+    }
   };
 
-  if (loading) return <div className="profile-page"><div className="loading">Loading...</div></div>;
-  if (error) return <div className="profile-page"><div className="error-message"><h2>Error</h2><p>{error}</p></div></div>;
+  if (loading)
+    return <div className="profile-page"><div className="loading">Loading...</div></div>;
+  if (error)
+    return (
+      <div className="profile-page">
+        <div className="error-message">
+          <h2>Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
 
   return (
     <div className="profile-page">
       <h2 className="title">👤 Profile</h2>
 
+      {/* Tabs */}
       <div className="profile-tabs">
         {["profile", "cart", "orders", "products"].map((tab) => (
           <button
@@ -172,25 +146,25 @@ const markAsShipped = async (order) => {
             {tab === "profile" && "Profile Info"}
             {tab === "cart" && `My Cart (${cart.length})`}
             {tab === "orders" && `My Orders (${myOrders.length})`}
-            {tab === "products" && `My Products (${myProducts.length})`}
+            {tab === "products" && "My Products"}
           </button>
         ))}
       </div>
 
-      {/* ✅ FIXED: Profile Info Section - Now using user data */}
-      {activeTab === "profile" && user && (
+      {/* Profile Info */}
+      {activeTab === "profile" && (
         <section className="user-info">
           <h3>Personal Details</h3>
           <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
           <p><strong>Email:</strong> {user.email}</p>
           <p><strong>Role:</strong> {user.role}</p>
-          <p><strong>User ID:</strong> {user._id}</p>
         </section>
       )}
-      
+
+      {/* My Cart */}
       {activeTab === "cart" && (
         <section>
-          <h3>🛒 My Cart ({cart.length})</h3>
+          <h3>🛒 My Cart</h3>
           {cart.length === 0 ? <p>No items in cart.</p> :
             cart.map((c) => (
               <div key={c._id} className="cart-item">
@@ -200,102 +174,80 @@ const markAsShipped = async (order) => {
         </section>
       )}
 
+      {/* My Orders */}
       {activeTab === "orders" && (
         <section>
-          <h3>📦 My Orders ({myOrders.length})</h3>
+          <h3>📦 My Orders</h3>
           {myOrders.length === 0 ? (
-            <p>You haven't placed any orders yet.</p>
+            <p>You haven’t placed any orders yet.</p>
           ) : (
             myOrders.map((o) => (
               <div key={o._id} className="order-card">
                 <p><strong>ID:</strong> {o._id}</p>
                 <p><strong>Status:</strong> {o.status}</p>
                 <p><strong>Total:</strong> ₹{o.totalAmount}</p>
-                <p><strong>Address:</strong> {o.address}</p>
               </div>
             ))
           )}
         </section>
       )}
 
-      {activeTab === "products" && (
-        <section className="my-products">
-          <div className="section-header">
-            <h3>📦 My Uploaded Products ({myProducts.length})</h3>
-            <div>
-              <button onClick={debugOrders} className="debug-btn">
-                🐛 Debug
-              </button>
-              <button onClick={refreshMyProducts} className="refresh-btn">
-                🔄 Refresh
+      {/* My Products */}
+    {/* My Products */}
+{activeTab === "products" && (
+  <section className="my-products">
+    <div className="section-header">
+      <h3>🛍️ My Uploaded Products</h3>
+      <button onClick={refreshMyProducts} className="refresh-btn">🔄 Refresh</button>
+    </div>
+
+    <div className="product-grid">
+      {myProducts.length === 0 ? (
+        <p>No products uploaded.</p>
+      ) : (
+        myProducts.map((p) => (
+          <div key={p._id} className="product-card">
+            <img src={p.images?.[0] || "https://via.placeholder.com/100"} alt={p.title} />
+            <h4>{p.title}</h4>
+            <p>₹{p.price}</p>
+            <p>Stock: {p.quantity}</p>
+          </div>
+        ))
+      )}
+    </div>
+
+    <div className="received-orders">
+      <h3>📬 Received Orders ({receivedOrders.length})</h3>
+      <div className="order-grid">
+        {receivedOrders.length === 0 ? (
+          <p>No received orders yet.</p>
+        ) : (
+          receivedOrders.map((order) => (
+            <div key={order._id} className="order-card">
+              <img
+                src={order.productImage || "https://via.placeholder.com/80"}
+                alt={order.productTitle}
+              />
+              <div className="order-info">
+                <h4>{order.productTitle}</h4>
+                <p>Qty: {order.quantity}</p>
+                <p>Status: <span className={order.status}>{order.status}</span></p>
+              </div>
+              <button
+                className="ship-btn"
+                onClick={() => markAsShipped(order._id)}
+                disabled={order.status === "shipped"}
+              >
+                {order.status === "shipped" ? "✅ Shipped" : "📦 Mark as Shipped"}
               </button>
             </div>
-          </div>
+          ))
+        )}
+      </div>
+    </div>
+  </section>
+)}
 
-          <div className="product-grid">
-            {myProducts.length === 0 ? (
-              <p>No products uploaded.</p>
-            ) : (
-              myProducts.map((p) => (
-                <div key={p._id} className="product-card">
-                  <img src={p.images?.[0] || "https://via.placeholder.com/100"} alt={p.title} />
-                  <h4>{p.title}</h4>
-                  <p>₹{p.price}</p>
-                  <p>Stock: {p.quantity}</p>
-                  <p className="orders-count">
-                    Orders: {p.orders ? p.orders.length : 0}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="received-orders">
-            <h3>📬 Received Orders ({receivedOrders.length})</h3>
-            
-            {receivedOrders.length === 0 ? (
-              <p>No received orders yet.</p>
-            ) : (
-              <div className="order-grid">
-                {receivedOrders.map((order) => (
-                  <div key={order.orderId} className="order-card received-order">
-                    <img
-                      src={order.productImage || "https://via.placeholder.com/80"}
-                      alt={order.productTitle}
-                    />
-                    <div className="order-info">
-                      <h4>{order.productTitle}</h4>
-                      <p><strong>Order ID:</strong> 
-                        {order.orderId.toString().startsWith('temp-order-') ? 
-                          <span style={{color: 'orange'}}>🔄 TEMP ID</span> : 
-                          order.orderId.toString().slice(-8)
-                        }
-                      </p>
-                      <p><strong>Quantity:</strong> {order.quantity}</p>
-                      <p><strong>Price:</strong> ₹{order.orderPrice}</p>
-                      <p><strong>Buyer:</strong> {order.buyerName}</p>
-                      <p><strong>Email:</strong> {order.buyerEmail}</p>
-                      <p><strong>Phone:</strong> {order.phone}</p>
-                      <p><strong>Address:</strong> {order.address}</p>
-                      <p><strong>Status:</strong> 
-                        <span className={`status ${order.status}`}>{order.status}</span>
-                      </p>
-                    </div>
-                    <button
-                      className="ship-btn"
-                      onClick={() => markAsShipped(order)}
-                      disabled={order.status === "shipped" || order.orderId.toString().startsWith('temp-order-')}
-                      title={order.orderId.toString().startsWith('temp-order-') ? "Temporary order ID - cannot update" : ""}
-                    >
-                      {order.status === "shipped" ? "✅ Shipped" : "🚚 Mark as Shipped"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
     </div>
   );
 };
