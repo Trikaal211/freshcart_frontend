@@ -105,6 +105,7 @@ const Profile = () => {
     },
   }
   );
+   await refreshMyProducts();
       // Update UI instantly
       setReceivedOrders((prev) =>
         prev.filter((o) => o._id !== orderId)
