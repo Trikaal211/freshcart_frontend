@@ -877,7 +877,6 @@ const getCartItemsCount = () => {
     </div>
   )}
   
-// Navbar.js mein cart sidebar section ko update karo:
 {cartItems.length > 0 && (
   <button className="checkout-btn" onClick={() => {
     // Get selected address based on active tab
