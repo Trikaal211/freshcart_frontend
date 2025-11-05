@@ -58,7 +58,7 @@ export default function Checkout() {
       });
       
       const cartData = res.data;
-      console.log("🛒 Cart data:", cartData);
+      console.log(" Cart data:", cartData);
       
       // Handle different response formats
       const products = cartData.products || cartData.items || [];
@@ -86,7 +86,7 @@ export default function Checkout() {
       setSaving(calculatedSaving > 0 ? -calculatedSaving : 0);
       setTotalItems(itemCount);
     } catch (err) {
-      console.error("❌ Error fetching cart:", err);
+      console.error(" Error fetching cart:", err);
       setError("Failed to load cart items");
     } finally {
       setLoading(false);
@@ -203,9 +203,9 @@ export default function Checkout() {
         await axios.delete("https://freshcart-backend-4wrc.onrender.com/cart/clear/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log("🛒 Cart cleared successfully");
+        console.log(" Cart cleared successfully");
       } catch (clearError) {
-        console.warn("⚠️ Could not clear cart:", clearError);
+        console.warn(" Could not clear cart:", clearError);
         // Continue even if cart clearing fails
       }
 
@@ -487,7 +487,7 @@ export default function Checkout() {
           
           {confirmed && (
             <div className="confirmation">
-              ✅ Order confirmed! {type === "delivery" ? "Delivery" : "Pickup"} {deliveryDay} · {deliverySlot}
+              Order confirmed! {type === "delivery" ? "Delivery" : "Pickup"} {deliveryDay} · {deliverySlot}
               <br />
               <small>Redirecting to your profile...</small>
             </div>
@@ -555,7 +555,7 @@ export default function Checkout() {
         </div>
         
         <div className="warn">
-          💡 Weighted products in cart — final amount may vary slightly.
+           Weighted products in cart — final amount may vary slightly.
         </div>
       </aside>
     </div>
