@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import "./upload.css";
 
 // Import modern alert icons
@@ -48,7 +48,7 @@ function ProductUpload() {
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   
   // Modern Alert States
   const [showAlert, setShowAlert] = useState(false);
@@ -147,8 +147,7 @@ function ProductUpload() {
         }
       );
 
-      const newProductId = res.data._id;
-      
+    const newProductId = res.data._id;      
       console.log("Product uploaded successfully! ID:", newProductId);
       
       // Show success alert
@@ -167,7 +166,7 @@ function ProductUpload() {
       // ✅ DIRECT REDIRECT - No dependency on state
       setTimeout(() => {
         console.log("Redirecting to all-products with ID:", newProductId);
-        navigate(`/all-products#product-${newProductId}`);
+      window.location.href = `/all-products#product-${newProductId}`;
       }, 2000);
 
     } catch (err) {
