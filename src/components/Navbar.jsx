@@ -10,7 +10,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiMiniChevronDown } from "react-icons/hi2";
 import { RiSearchLine, RiCloseLine } from "react-icons/ri";
 import { BsBrightnessHigh } from "react-icons/bs";
-import { FaRegUser, FaChevronDown } from "react-icons/fa";
+import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus } from "react-icons/fa";
 import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
@@ -39,6 +39,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const searchBoxRef = useRef(null);
   const mobileSearchRef = useRef(null);
+  const userDropdownRef = useRef(null);
 
   // ---------------- CATEGORIES DATA ----------------
   const categoriesData = [
@@ -241,19 +242,19 @@ const Navbar = () => {
     } catch (err) { console.error("Error updating quantity:", err); }
   }
 
-  // Calculate total cart items count
-// Calculate total cart items count - IMPROVED
-const getCartItemsCount = () => {
-  return cartItems.reduce((total, item) => {
-    // 🟢 Only count items that have valid product data
-    const product = item.productId || item.product;
-    if (product) {
-      return total + item.quantity;
-    }
-    return total;
-  }, 0);
-};
-  // Handle user icon click
+  // Calculate total cart items count - IMPROVED
+  const getCartItemsCount = () => {
+    return cartItems.reduce((total, item) => {
+      // 🟢 Only count items that have valid product data
+      const product = item.productId || item.product;
+      if (product) {
+        return total + item.quantity;
+      }
+      return total;
+    }, 0);
+  };
+
+  // Handle user icon click - UPDATED
   const handleUserIconClick = () => {
     const isSmallScreen = window.innerWidth <= 348;
     
@@ -271,10 +272,8 @@ const getCartItemsCount = () => {
         }
         setUserDropdown(!userDropdown);
       } else { 
-        alert("Session expired"); 
-        localStorage.removeItem("accessToken"); 
-        setUser(null);
-        navigate("/user"); 
+        // For non-logged in users, just toggle the dropdown
+        setUserDropdown(!userDropdown);
       }
     }
   };
@@ -328,7 +327,7 @@ const getCartItemsCount = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // User dropdown
-      if (userDropdown && !event.target.closest('.user-dropdown-container')) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
         setUserDropdown(false);
       }
       
@@ -721,86 +720,131 @@ const getCartItemsCount = () => {
             <div className="right-div"><BsBrightnessHigh size={18}/></div>
             <div className="right-div-l"><CiLocationOn size={22}/></div>
             
-            {/* USER DROPDOWN */}
-            <div className="right-div user user-dropdown-container">
-              {isLoggedIn ? (
-                <div 
-                  className="user-icon-wrapper"
-                  onClick={handleUserIconClick}
-                >
-                  <FaRegUser size={16} className='user-icon'/>
-                  <FaChevronDown size={10} className="dropdown-arroww" />
-                </div>
-              ) : (
-                <Link to="/user" className="user-login-link">
-                  <FaRegUser size={16} />
-                </Link>
-              )}
+            {/* USER DROPDOWN - UPDATED */}
+            <div className="right-div user user-dropdown-container" ref={userDropdownRef}>
+              <div 
+                className="user-icon-wrapper"
+                onClick={handleUserIconClick}
+              >
+                <FaRegUser size={16} className='user-icon'/>
+                <FaChevronDown size={10} className={`dropdown-arroww ${userDropdown ? 'rotate' : ''}`} />
+              </div>
               
-              {/* USER DROPDOWN MENU */}
+              {/* USER DROPDOWN MENU - UPDATED */}
               {userDropdown && window.innerWidth > 348 && (
-                <div className="user-dropdown-menu">
-                  <div className="dropdown-header">
-                    <div className="user-avatar">
-                      <FaRegUser size={20} />
-                    </div>
-                    <div className="user-info">
-                      {loadingUser ? (
-                        <div className="user-loading">Loading...</div>
-                      ) : user ? (
-                        <>
-                          <div className="user-name">
-                            Welcome {user.name || user.firstName || user.email.split('@')[0]}
-                          </div>
-                          <div className="user-email">{user.email}</div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="user-name">Welcome User</div>
-                          <div className="user-email">user@example.com</div>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                <div className={`user-dropdown-menu ${isLoggedIn ? 'logged-in' : 'logged-out'}`}>
                   
-                  <div className="dropdown-divider"></div>
-                  
-                  <Link 
-                    to="/profile" 
-                    className="dropdown-item"
-                    onClick={() => setUserDropdown(false)}
-                  >
-                    <span className="item-icon"></span>
-                    My Profile
-                  </Link>
-                  
-                  <Link 
-                    to="/wishlist" 
-                    className="dropdown-item"
-                    onClick={() => setUserDropdown(false)}
-                  >
-                    <span className="item-icon"></span>
-                    My Wishlist
-                  </Link>
-                  
-                  <Link 
-                    to="/orders" 
-                    className="dropdown-item"
-                    onClick={() => setUserDropdown(false)}
-                  >
-                    <span className="item-icon"></span>
-                    My Orders
-                  </Link>
-                  
-                  <div className="dropdown-divider"></div>
-                  
-                  <button 
-                    className="dropdown-item logout-btn"
-                    onClick={handleLogout}
-                  >
-                    <span className="item-icon"></span>
-                    Logout
-                  </button>
+                  {isLoggedIn ? (
+                    // LOGGED IN USER MENU
+                    <>
+                      <div className="dropdown-header">
+                        <div className="user-avatar">
+                          <FaRegUser size={20} />
+                        </div>
+                        <div className="user-info">
+                          {loadingUser ? (
+                            <div className="user-loading">Loading...</div>
+                          ) : user ? (
+                            <>
+                              <div className="user-name">
+                                Welcome {user.name || user.firstName || user.email.split('@')[0]}
+                              </div>
+                              <div className="user-email">{user.email}</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="user-name">Welcome User</div>
+                              <div className="user-email">user@example.com</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="dropdown-divider"></div>
+                      
+                      <Link 
+                        to="/profile" 
+                        className="dropdown-item"
+                        onClick={() => setUserDropdown(false)}
+                      >
+                        <span className="item-icon">👤</span>
+                        My Profile
+                      </Link>
+                      
+                      <Link 
+                        to="/wishlist" 
+                        className="dropdown-item"
+                        onClick={() => setUserDropdown(false)}
+                      >
+                        <span className="item-icon">❤️</span>
+                        My Wishlist
+                      </Link>
+                      
+                      <Link 
+                        to="/orders" 
+                        className="dropdown-item"
+                        onClick={() => setUserDropdown(false)}
+                      >
+                        <span className="item-icon">📦</span>
+                        My Orders
+                      </Link>
+                      
+                      <div className="dropdown-divider"></div>
+                      
+                      <button 
+                        className="dropdown-item logout-btn"
+                        onClick={handleLogout}
+                      >
+                        <span className="item-icon">🚪</span>
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    // NOT LOGGED IN USER MENU
+                    <>
+                      <div className="dropdown-header guest-header">
+                        <div className="user-avatar guest-avatar">
+                          <FaRegUser size={20} />
+                        </div>
+                        <div className="user-info">
+                          <div className="user-name">Welcome Guest</div>
+                          <div className="user-email">Sign in to your account</div>
+                        </div>
+                      </div>
+                      
+                      <div className="dropdown-divider"></div>
+                      
+                      <Link 
+                        to="/user?tab=login" 
+                        className="dropdown-item login-item"
+                        onClick={() => setUserDropdown(false)}
+                      >
+                        <FaSignInAlt className="item-icon" />
+                        <div className="item-content">
+                          <div className="item-title">Login</div>
+                          <div className="item-subtitle">Access your account</div>
+                        </div>
+                      </Link>
+                      
+                      <Link 
+                        to="/user?tab=signup" 
+                        className="dropdown-item signup-item"
+                        onClick={() => setUserDropdown(false)}
+                      >
+                        <FaUserPlus className="item-icon" />
+                        <div className="item-content">
+                          <div className="item-title">Sign Up</div>
+                          <div className="item-subtitle">Create new account</div>
+                        </div>
+                      </Link>
+                      
+                      <div className="dropdown-divider"></div>
+                      
+                      <div className="dropdown-footer">
+                        <p>New customer? <Link to="/user?tab=signup" onClick={() => setUserDropdown(false)}>Start here</Link></p>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -815,104 +859,104 @@ const getCartItemsCount = () => {
           </div>
 
           {/* CART SIDEBAR */}
-<div className={`cart-side ${cart? "open":""}`}>
-  <div className="cart-header">
-    <h2>Your Cart ({getCartItemsCount()} items)</h2>
-    <button onClick={()=>setOpenCart(false)}>×</button>
-  </div>
-  
-  {loadingCart ? (
-    <p>Loading cart...</p>
-  ) : cartItems.length === 0 ? (
-    <p>Your cart is empty</p>
-  ) : (
-    <div className="cart-items">
-      {cartItems.map(item => {
-        // 🟢 CORRECTED: Handle different product structures
-        const product = item.productId || item.product;
-        
-        // 🟢 If product data is missing, show fallback UI
-        if (!product) {
-          return (
-            <div key={item._id} className="cart-item">
-              <img src="https://via.placeholder.com/60x60?text=Product" alt="Product not available"/>
-              <div className="cart-item-info">
-                <h4>Product not available</h4>
-                <div className="quantity-control">
-                  <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
-                </div>
-                <p>Qty: {item.quantity}</p>
-                <p>Total: ₹{(item.price * item.quantity).toFixed(2)}</p>
-              </div>
-              <button onClick={()=>handleDelete(item._id)}>Delete</button>
+          <div className={`cart-side ${cart? "open":""}`}>
+            <div className="cart-header">
+              <h2>Your Cart ({getCartItemsCount()} items)</h2>
+              <button onClick={()=>setOpenCart(false)}>×</button>
             </div>
-          );
-        }
+            
+            {loadingCart ? (
+              <p>Loading cart...</p>
+            ) : cartItems.length === 0 ? (
+              <p>Your cart is empty</p>
+            ) : (
+              <div className="cart-items">
+                {cartItems.map(item => {
+                  // 🟢 CORRECTED: Handle different product structures
+                  const product = item.productId || item.product;
+                  
+                  // 🟢 If product data is missing, show fallback UI
+                  if (!product) {
+                    return (
+                      <div key={item._id} className="cart-item">
+                        <img src="https://via.placeholder.com/60x60?text=Product" alt="Product not available"/>
+                        <div className="cart-item-info">
+                          <h4>Product not available</h4>
+                          <div className="quantity-control">
+                            <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
+                            <span>{item.quantity}</span>
+                            <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+                          </div>
+                          <p>Qty: {item.quantity}</p>
+                          <p>Total: ₹{(item.price * item.quantity).toFixed(2)}</p>
+                        </div>
+                        <button onClick={()=>handleDelete(item._id)}>Delete</button>
+                      </div>
+                    );
+                  }
 
-        const productPrice = product.discountPrice || product.price || item.price || 0;
-        const productTitle = product.title || "Product";
-        const productImage = product.images?.[0] || "https://via.placeholder.com/60x60?text=Product";
+                  const productPrice = product.discountPrice || product.price || item.price || 0;
+                  const productTitle = product.title || "Product";
+                  const productImage = product.images?.[0] || "https://via.placeholder.com/60x60?text=Product";
 
-        return (
-          <div key={item._id} className="cart-item">
-            <img src={productImage} alt={productTitle} onError={(e) => {
-              e.target.src = "https://via.placeholder.com/60x60?text=Product";
-            }}/>
-            <div className="cart-item-info">
-              <h4>{productTitle}</h4>
-              <div className="quantity-control">
-                <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
-                <span>{item.quantity}</span>
-                <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+                  return (
+                    <div key={item._id} className="cart-item">
+                      <img src={productImage} alt={productTitle} onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/60x60?text=Product";
+                      }}/>
+                      <div className="cart-item-info">
+                        <h4>{productTitle}</h4>
+                        <div className="quantity-control">
+                          <button onClick={()=>handleQuantityChange(item._id, item.quantity-1)} disabled={item.quantity<=1}>-</button>
+                          <span>{item.quantity}</span>
+                          <button onClick={()=>handleQuantityChange(item._id, item.quantity+1)}>+</button>
+                        </div>
+                        <p>Qty: {item.quantity}</p>
+                        <p>Total: ₹{(productPrice * item.quantity).toFixed(2)}</p>
+                      </div>
+                      <button onClick={()=>handleDelete(item._id)}>Delete</button>
+                    </div>
+                  );
+                })}
               </div>
-              <p>Qty: {item.quantity}</p>
-              <p>Total: ₹{(productPrice * item.quantity).toFixed(2)}</p>
-            </div>
-            <button onClick={()=>handleDelete(item._id)}>Delete</button>
+            )}
+            
+            {cartItems.length > 0 && (
+              <button className="checkout-btn" onClick={() => {
+                // Get selected address based on active tab
+                let selectedAddress;
+                if (activeTab === "delivery") {
+                  selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
+                } else {
+                  selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
+                }
+                
+                setOpenCart(false);
+                
+                // Filter out invalid items before checkout
+                const validCartItems = cartItems.filter(item => {
+                  const product = item.productId || item.product;
+                  return !!product;
+                });
+
+                console.log("Navigating to checkout with:", {
+                  selectedAddress,
+                  type: activeTab,
+                  cartItems: validCartItems
+                });
+
+                navigate("/checkout", { 
+                  state: { 
+                    selectedAddress: selectedAddress, 
+                    type: activeTab,
+                    cartItems: validCartItems.length > 0 ? validCartItems : cartItems
+                  } 
+                });
+              }}>
+                Go to Checkout
+              </button>
+            )}
           </div>
-        );
-      })}
-    </div>
-  )}
-  
-{cartItems.length > 0 && (
-  <button className="checkout-btn" onClick={() => {
-    // Get selected address based on active tab
-    let selectedAddress;
-    if (activeTab === "delivery") {
-      selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
-    } else {
-      selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
-    }
-    
-    setOpenCart(false);
-    
-    // Filter out invalid items before checkout
-    const validCartItems = cartItems.filter(item => {
-      const product = item.productId || item.product;
-      return !!product;
-    });
-
-    console.log("Navigating to checkout with:", {
-      selectedAddress,
-      type: activeTab,
-      cartItems: validCartItems
-    });
-
-    navigate("/checkout", { 
-      state: { 
-        selectedAddress: selectedAddress, 
-        type: activeTab,
-        cartItems: validCartItems.length > 0 ? validCartItems : cartItems
-      } 
-    });
-  }}>
-    Go to Checkout
-  </button>
-)}
-</div>
         </div>
 
         {/* MOBILE SEARCH SIDEBAR */}
@@ -960,6 +1004,7 @@ const getCartItemsCount = () => {
         {cart && <div className="overlay" onClick={()=>setOpenCart(false)}></div>}
         {categoriesOpen && <div className="overlay" onClick={() => setCategoriesOpen(false)}></div>}
         {mobileSearchOpen && <div className="overlay" onClick={() => setMobileSearchOpen(false)}></div>}
+        {userDropdown && <div className="overlay" onClick={() => setUserDropdown(false)}></div>}
       </div>
     </div>
   )
