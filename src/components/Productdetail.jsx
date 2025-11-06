@@ -33,10 +33,12 @@ const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/${
     return () => clearInterval(interval);
   }, []);
 
-  if (!product) return 
-  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+if (!product)
+  return (
+    <div style={{ fontSize: "1.5rem", fontWeight: "bold", textAlign: "center" }}>
       Loading{dots}
     </div>
+  );
   return (
     <div className="product-detail-wrapper">
       {/*  LEFT - Images */}
