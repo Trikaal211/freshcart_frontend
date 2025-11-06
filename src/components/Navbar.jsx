@@ -245,7 +245,7 @@ const Navbar = () => {
   // Calculate total cart items count - IMPROVED
   const getCartItemsCount = () => {
     return cartItems.reduce((total, item) => {
-      // 🟢 Only count items that have valid product data
+      // Only count items that have valid product data
       const product = item.productId || item.product;
       if (product) {
         return total + item.quantity;
@@ -775,7 +775,7 @@ const Navbar = () => {
                         className="dropdown-item"
                         onClick={() => setUserDropdown(false)}
                       >
-                        <span className="item-icon">👤</span>
+                        <span className="item-icon"></span>
                         My Profile
                       </Link>
                       
@@ -784,7 +784,7 @@ const Navbar = () => {
                         className="dropdown-item"
                         onClick={() => setUserDropdown(false)}
                       >
-                        <span className="item-icon">❤️</span>
+                        <span className="item-icon"></span>
                         My Wishlist
                       </Link>
                       
@@ -793,7 +793,7 @@ const Navbar = () => {
                         className="dropdown-item"
                         onClick={() => setUserDropdown(false)}
                       >
-                        <span className="item-icon">📦</span>
+                        <span className="item-icon"></span>
                         My Orders
                       </Link>
                       
@@ -803,7 +803,7 @@ const Navbar = () => {
                         className="dropdown-item logout-btn"
                         onClick={handleLogout}
                       >
-                        <span className="item-icon">🚪</span>
+                        <span className="item-icon"></span>
                         Logout
                       </button>
                     </>
@@ -887,10 +887,10 @@ const Navbar = () => {
             ) : (
               <div className="cart-items">
                 {cartItems.map(item => {
-                  // 🟢 CORRECTED: Handle different product structures
+                  //  CORRECTED: Handle different product structures
                   const product = item.productId || item.product;
                   
-                  // 🟢 If product data is missing, show fallback UI
+                  //  If product data is missing, show fallback UI
                   if (!product) {
                     return (
                       <div key={item._id} className="cart-item">
