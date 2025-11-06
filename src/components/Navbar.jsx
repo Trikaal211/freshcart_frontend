@@ -10,7 +10,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiMiniChevronDown } from "react-icons/hi2";
 import { RiSearchLine, RiCloseLine } from "react-icons/ri";
 import { BsBrightnessHigh } from "react-icons/bs";
-import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus, FaExclamationCircle, FaCheck, FaShoppingCart } from "react-icons/fa";
+import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus, FaExclamationCircle } from "react-icons/fa";
 import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
@@ -31,10 +31,6 @@ const Navbar = () => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchTerm, setMobileSearchTerm] = useState("");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
-  
-  // ADD TO CART ALERT STATE
-  const [showCartAlert, setShowCartAlert] = useState(false);
-  const [alertProduct, setAlertProduct] = useState(null);
   
   // USER DATA STATE
   const [user, setUser] = useState(null);
@@ -218,18 +214,6 @@ const Navbar = () => {
     }
   };
 
-  // SHOW ADD TO CART ALERT
-  const showAddToCartAlert = (product) => {
-    setAlertProduct(product);
-    setShowCartAlert(true);
-    
-    // Auto hide after 3 seconds
-    setTimeout(() => {
-      setShowCartAlert(false);
-    }, 3000);
-  };
-
-  // MODIFIED: handleDelete with alert
   async function handleDelete(cartItemId) {
     const token = localStorage.getItem("accessToken");
     if (!token) { alert("Please login first!"); return; }
@@ -243,15 +227,9 @@ const Navbar = () => {
     } catch (err) { console.error("Error removing cart item:", err); }
   }
 
-  // MODIFIED: handleQuantityChange with alert for increases
   async function handleQuantityChange(cartItemId, newQuantity) {
     const token = localStorage.getItem("accessToken");
     if (!token) { alert("Please login first!"); return; }
-    
-    // Find the current item to check if we're increasing quantity
-    const currentItem = cartItems.find(item => item._id === cartItemId);
-    const isIncreasing = newQuantity > (currentItem?.quantity || 0);
-    
     try {
       const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/cart/${cartItemId}`, {
         method: "PUT",
@@ -261,14 +239,6 @@ const Navbar = () => {
       if (!res.ok) throw new Error("Failed to update quantity");
       const updatedCart = await res.json();
       setCartItems(updatedCart.products || []);
-      
-      // Show alert only when increasing quantity (not decreasing)
-      if (isIncreasing && currentItem) {
-        const product = currentItem.productId || currentItem.product;
-        if (product) {
-          showAddToCartAlert(product);
-        }
-      }
     } catch (err) { console.error("Error updating quantity:", err); }
   }
 
@@ -448,31 +418,6 @@ const Navbar = () => {
   // ---------------- JSX ----------------
   return (
     <div className={`main ${isFixed ? "fixed" : ""}`}>
-      {/* MODERN ADD TO CART ALERT */}
-      {showCartAlert && alertProduct && (
-        <div className="modern-cart-alert">
-          <div className="alert-content">
-            <div className="alert-icon">
-              <FaCheck />
-            </div>
-            <div className="alert-text">
-              <div className="alert-title">Added to Cart!</div>
-              <div className="alert-product">{alertProduct.title}</div>
-            </div>
-            <div className="alert-image">
-              <img src={alertProduct.images?.[0] || "https://via.placeholder.com/50x50?text=Product"} alt={alertProduct.title} />
-            </div>
-            <button 
-              className="alert-close"
-              onClick={() => setShowCartAlert(false)}
-            >
-              <RiCloseLine />
-            </button>
-          </div>
-          <div className="alert-progress"></div>
-        </div>
-      )}
-
       <div className="navbar-cover">
 
         {/* LEFT */}
