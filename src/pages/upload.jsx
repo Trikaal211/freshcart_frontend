@@ -135,7 +135,7 @@ function ProductUpload() {
 
       files.forEach(file => formData.append("images", file));
 
-      const data = await axios.post(
+      const res = await axios.post(
         "https://freshcart-backend-4wrc.onrender.com/products",
         formData,
         {
@@ -147,27 +147,9 @@ function ProductUpload() {
         }
       );
 
-    let newProductId;
-    
-    // Check different possible response structures
-    if (data._id) {
-      newProductId = data._id; // Direct _id
-    } else if (data.product?._id) {
-      newProductId = data.product._id; // Nested in product
-    } else if (data.id) {
-      newProductId = data.id; // id instead of _id
-    } else if (data.data?._id) {
-      newProductId = data.data._id; // Nested in data
-    } else {
-      console.error("❌ No product ID found in response:", data);
-      throw new Error("Product ID not received from server");
-    }
-
-    console.log("✅ Extracted Product ID:", newProductId);
-
-    if (!newProductId) {
-      throw new Error("Invalid product ID received");
-    }
+    const newProductId = res.data._id;      
+      console.log("Product uploaded successfully! ID:", newProductId);
+      
       // Show success alert
       showModernAlert(
         "success", 
