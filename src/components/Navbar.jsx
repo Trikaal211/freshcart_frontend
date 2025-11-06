@@ -10,7 +10,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiMiniChevronDown } from "react-icons/hi2";
 import { RiSearchLine, RiCloseLine } from "react-icons/ri";
 import { BsBrightnessHigh } from "react-icons/bs";
-import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus, FaExclamationCircle } from "react-icons/fa";
+import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus, FaExclamationCircle, FaInfoCircle, FaExclamationTriangle, FaCheck } from "react-icons/fa";
 import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
@@ -31,6 +31,13 @@ const Navbar = () => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchTerm, setMobileSearchTerm] = useState("");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  
+  // MODERN ALERT STATES
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+  const [showCartAccessAlert, setShowCartAccessAlert] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showQuantityAlert, setShowQuantityAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
   
   // USER DATA STATE
   const [user, setUser] = useState(null);
@@ -189,6 +196,37 @@ const Navbar = () => {
     }
   }
 
+  // MODERN ALERT FUNCTIONS - FIXED
+  const showModernAlert = (type) => {
+    switch(type) {
+      case 'login':
+        setAlertMessage("Please login to continue");
+        setShowLoginAlert(true);
+        setTimeout(() => setShowLoginAlert(false), 3000);
+        break;
+      case 'cartAccess':
+        setAlertMessage("Please login to view your cart");
+        setShowCartAccessAlert(true);
+        setTimeout(() => {
+          setShowCartAccessAlert(false);
+          navigate("/user");
+        }, 2000);
+        break;
+      case 'delete':
+        setAlertMessage("Product removed from cart");
+        setShowDeleteAlert(true);
+        setTimeout(() => setShowDeleteAlert(false), 3000);
+        break;
+      case 'quantity':
+        setAlertMessage("Cart quantity changed");
+        setShowQuantityAlert(true);
+        setTimeout(() => setShowQuantityAlert(false), 3000);
+        break;
+      default:
+        break;
+    }
+  };
+
   // FETCH USER DATA FUNCTION
   const fetchUserData = async () => {
     const token = localStorage.getItem("accessToken");
@@ -214,9 +252,13 @@ const Navbar = () => {
     }
   };
 
+  // MODIFIED: handleDelete with modern alert
   async function handleDelete(cartItemId) {
     const token = localStorage.getItem("accessToken");
-    if (!token) { alert("Please login first!"); return; }
+    if (!token) { 
+      showModernAlert('login'); 
+      return; 
+    }
     try {
       const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/cart/${cartItemId}`, {
         method: "DELETE",
@@ -224,12 +266,17 @@ const Navbar = () => {
       });
       if (!res.ok) throw new Error("Failed to delete on server");
       setCartItems(prev => prev.filter(item => item._id !== cartItemId));
+      showModernAlert('delete');
     } catch (err) { console.error("Error removing cart item:", err); }
   }
 
+  // MODIFIED: handleQuantityChange with modern alert
   async function handleQuantityChange(cartItemId, newQuantity) {
     const token = localStorage.getItem("accessToken");
-    if (!token) { alert("Please login first!"); return; }
+    if (!token) { 
+      showModernAlert('login'); 
+      return; 
+    }
     try {
       const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/cart/${cartItemId}`, {
         method: "PUT",
@@ -239,6 +286,7 @@ const Navbar = () => {
       if (!res.ok) throw new Error("Failed to update quantity");
       const updatedCart = await res.json();
       setCartItems(updatedCart.products || []);
+      showModernAlert('quantity');
     } catch (err) { console.error("Error updating quantity:", err); }
   }
 
@@ -418,6 +466,80 @@ const Navbar = () => {
   // ---------------- JSX ----------------
   return (
     <div className={`main ${isFixed ? "fixed" : ""}`}>
+      
+      {/* MODERN ALERTS */}
+      {/* Login Required Alert */}
+      {showLoginAlert && (
+        <div className="modern-alert warning-alert">
+          <div className="alert-content">
+            <div className="alert-icon warning-icon">
+              <FaExclamationTriangle />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Login Required</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <div className="alert-progress-bar">
+              <div className="progress-fill warning-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Access Alert */}
+      {showCartAccessAlert && (
+        <div className="modern-alert info-alert">
+          <div className="alert-content">
+            <div className="alert-icon info-icon">
+              <FaInfoCircle />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Access Denied</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <div className="alert-progress-bar">
+              <div className="progress-fill info-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Alert */}
+      {showDeleteAlert && (
+        <div className="modern-alert error-alert">
+          <div className="alert-content">
+            <div className="alert-icon error-icon">
+              <FaExclamationCircle />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Item Removed</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <div className="alert-progress-bar">
+              <div className="progress-fill error-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quantity Update Alert */}
+      {showQuantityAlert && (
+        <div className="modern-alert success-alert">
+          <div className="alert-content">
+            <div className="alert-icon success-icon">
+              <FaCheck />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Quantity Updated</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <div className="alert-progress-bar">
+              <div className="progress-fill success-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="navbar-cover">
 
         {/* LEFT */}
@@ -857,11 +979,10 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* CART ICON */}
+            {/* CART ICON - UPDATED WITH MODERN ALERT */}
             <div onClick={()=>{
               if (!isLoggedIn) {
-                alert("Please login to view your cart!");
-                navigate("/user");
+                showModernAlert('cartAccess');
                 return;
               }
               setOpenCart(true);
@@ -887,10 +1008,10 @@ const Navbar = () => {
             ) : (
               <div className="cart-items">
                 {cartItems.map(item => {
-                  //  CORRECTED: Handle different product structures
+                  // CORRECTED: Handle different product structures
                   const product = item.productId || item.product;
                   
-                  //  If product data is missing, show fallback UI
+                  // If product data is missing, show fallback UI
                   if (!product) {
                     return (
                       <div key={item._id} className="cart-item">
