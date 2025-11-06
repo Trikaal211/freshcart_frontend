@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import "./upload.css";
 
 // Import modern alert icons
@@ -48,7 +48,7 @@ function ProductUpload() {
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   
   // Modern Alert States
   const [showAlert, setShowAlert] = useState(false);
@@ -115,40 +115,38 @@ function ProductUpload() {
   };
 
   // Submit product - COMPLETELY FIXED
- // Submit product - WITH PROPER ERROR HANDLING
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      showModernAlert("error", "Login Required", "Please login to upload products", 4000);
-      setIsLoading(false);
-      return;
-    }
-
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (typeof value === "object") formData.append(key, JSON.stringify(value));
-      else formData.append(key, value);
-    });
-
-    files.forEach(file => formData.append("images", file));
-
-    const { data } = await axios.post(
-      "https://freshcart-backend-4wrc.onrender.com/products",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        showModernAlert("error", "Login Required", "Please login to upload products", 4000);
+        setIsLoading(false);
+        return;
       }
-    );
 
-    // ✅ PROPER PRODUCT ID EXTRACTION
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (typeof value === "object") formData.append(key, JSON.stringify(value));
+        else formData.append(key, value);
+      });
+
+      files.forEach(file => formData.append("images", file));
+
+      const data = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/products",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
     let newProductId;
     
     // Check different possible response structures
@@ -170,38 +168,37 @@ const handleSubmit = async (e) => {
     if (!newProductId) {
       throw new Error("Invalid product ID received");
     }
+      // Show success alert
+      showModernAlert(
+        "success", 
+        "Product Uploaded!", 
+        "Product successfully uploaded. Redirecting...",
+        2000
+      );
 
-    // Show success alert
-    showModernAlert(
-      "success", 
-      "Product Uploaded!", 
-      "Product successfully uploaded. Redirecting...",
-      2000
-    );
+      // Reset form after successful upload
+      setForm(initialForm);
+      setFiles([]);
+      setPreview([]);
 
-    // Reset form
-    setForm(initialForm);
-    setFiles([]);
-    setPreview([]);
+      // ✅ DIRECT REDIRECT - No dependency on state
+      setTimeout(() => {
+        console.log("Redirecting to all-products with ID:", newProductId);
+      window.location.href = `/all-products#product-${newProductId}`;
+      }, 2000);
 
-    // Redirect after delay
-    setTimeout(() => {
-      console.log("🚀 Redirecting with Product ID:", newProductId);
-      navigate(`/all-products#product-${newProductId}`);
-    }, 2000);
-
-  } catch (err) {
-    console.error("❌ Upload error:", err);
-    showModernAlert(
-      "error", 
-      "Upload Failed", 
-      err.response?.data?.error || err.message || "Upload failed. Please try again.",
-      4000
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } catch (err) {
+      console.error(" Upload error:", err);
+      showModernAlert(
+        "error", 
+        "Upload Failed", 
+        err.response?.data?.error || "Upload failed. Please try again.",
+        4000
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Cleanup preview URLs
   useEffect(() => {
