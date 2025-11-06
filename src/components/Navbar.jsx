@@ -835,7 +835,7 @@ const Navbar = () => {
                       </Link>
                       
                       <Link 
-                        to="/user?tab=signup" 
+                        to="/user?tab=sign-up" 
                         className="dropdown-item signup-item"
                         onClick={() => setUserDropdown(false)}
                       >
