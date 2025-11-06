@@ -47,7 +47,7 @@ function ProductUpload() {
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
-  const [uploadedProductId, setUploadedProductId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
   // Modern Alert States
@@ -64,7 +64,7 @@ function ProductUpload() {
       .catch(err => console.error(" Category fetch error:", err));
   }, []);
 
-  // Modern Alert Function
+  // Modern Alert Function - SIMPLIFIED
   const showModernAlert = (type, title, message, duration = 3000) => {
     setAlertType(type);
     setAlertTitle(title);
@@ -74,10 +74,6 @@ function ProductUpload() {
     
     setTimeout(() => {
       setShowAlert(false);
-      // If it's a success alert and we have a product ID, redirect after alert closes
-      if (type === "success" && uploadedProductId) {
-        navigate(`/all-products`);
-      }
     }, duration);
   };
 
@@ -118,14 +114,16 @@ function ProductUpload() {
     setPreview(selectedFiles.map(f => URL.createObjectURL(f)));
   };
 
-  // Submit product
+  // Submit product - COMPLETELY FIXED
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         showModernAlert("error", "Login Required", "Please login to upload products", 4000);
+        setIsLoading(false);
         return;
       }
 
@@ -149,8 +147,9 @@ function ProductUpload() {
         }
       );
 
-      // Store the uploaded product ID for redirect
-      setUploadedProductId(res.data._id);
+      const newProductId = res.data._id;
+      
+      console.log("Product uploaded successfully! ID:", newProductId);
       
       // Show success alert
       showModernAlert(
@@ -165,6 +164,12 @@ function ProductUpload() {
       setFiles([]);
       setPreview([]);
 
+      // ✅ DIRECT REDIRECT - No dependency on state
+      setTimeout(() => {
+        console.log("Redirecting to all-products with ID:", newProductId);
+        navigate(`/all-products#product-${newProductId}`);
+      }, 2000);
+
     } catch (err) {
       console.error(" Upload error:", err);
       showModernAlert(
@@ -173,8 +178,17 @@ function ProductUpload() {
         err.response?.data?.error || "Upload failed. Please try again.",
         4000
       );
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Cleanup preview URLs
+  useEffect(() => {
+    return () => {
+      preview.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [preview]);
 
   return (
     <div className="upload-wrapper">
@@ -261,7 +275,9 @@ function ProductUpload() {
           ))}
         </div>
 
-        <button type="submit" className="upload-btn">Upload Product</button>
+        <button type="submit" className="upload-btn" disabled={isLoading}>
+          {isLoading ? "Uploading..." : "Upload Product"}
+        </button>
       </form>
     </div>
   );
