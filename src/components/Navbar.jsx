@@ -823,7 +823,7 @@ const Navbar = () => {
                       <div className="dropdown-divider"></div>
                       
                       <Link 
-                        to="/user?tab=login" 
+                        to="/user" 
                         className="dropdown-item login-item"
                         onClick={() => setUserDropdown(false)}
                       >
@@ -835,7 +835,7 @@ const Navbar = () => {
                       </Link>
                       
                       <Link 
-                        to="/user?tab=sign-up" 
+                        to="/sign-up" 
                         className="dropdown-item signup-item"
                         onClick={() => setUserDropdown(false)}
                       >
