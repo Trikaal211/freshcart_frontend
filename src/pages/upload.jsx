@@ -147,7 +147,7 @@ function ProductUpload() {
         }
       );
 
-    const newProductId = res.data._id;      
+const newProductId = res.data?.product?._id || res.data?._id;
       console.log("Product uploaded successfully! ID:", newProductId);
       
       // Show success alert
