@@ -18,7 +18,7 @@ const SpecialProducts = () => {
   const { addToCart, cartItems } = useContext(CartContext);
   const token = localStorage.getItem("accessToken");
 
-  // ✅ Fetch Special Products
+  //  Fetch Special Products
   useEffect(() => {
     const fetchSpecialProducts = async () => {
       try {
@@ -44,7 +44,7 @@ const response = await fetch("https://freshcart-backend-4wrc.onrender.com/produc
     fetchSpecialProducts();
   }, []);
 
-  // ✅ Check if a product is in wishlist
+  //  Check if a product is in wishlist
   useEffect(() => {
     if (!token || products.length === 0) return;
 
@@ -67,7 +67,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist/al
     fetchWishlistStatus();
   }, [products, token]);
 
-  // ✅ Add or remove from wishlist
+  //  Add or remove from wishlist
   const toggleWishlist = async (productId) => {
     if (!token) {
       alert("Please login to use wishlist");
@@ -99,7 +99,7 @@ await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
     }
   };
 
-  // ✅ Add to Cart
+  // Add to Cart
   const handleAddToCart = async (productId) => {
     try {
       await addToCart(productId.toString(), 1);
@@ -168,12 +168,12 @@ await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
                   <SwiperSlide key={prod.id}>
                     <div className="product-card">
                       <div className="img-wrapper">
-                        {/* 👇 Product link */}
+                        {/* Product link */}
                         <Link to={`/product/${prod.id}`} className="product-card-link">
                           <img src={prod.image} alt={prod.name} />
                         </Link>
 
-                        {/* ❤️ Wishlist */}
+                        {/* Wishlist */}
                         <div
                           className="wish"
                           onClick={() => toggleWishlist(prod.id)}
@@ -185,7 +185,7 @@ await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
                           )}
                         </div>
 
-                        {/* 🛒 Add to Cart */}
+                        {/* Add to Cart */}
                         <div className="add">
                           <button
                             className={`add-btn ${isInCart ? "in-cart" : ""}`}
@@ -195,7 +195,7 @@ await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
                           </button>
                         </div>
 
-                        {/* 💸 Discount tag (optional) */}
+                        {/* Discount tag (optional) */}
                         {prod.discount && (
                           <span className="discount">{prod.discount}</span>
                         )}

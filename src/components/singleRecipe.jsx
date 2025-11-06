@@ -26,7 +26,7 @@ const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/recipes/${i
 
   if (!recipe) return <p>Loading...</p>;
 
-  // ✅ Back button function
+  //  Back button function
   const goBackToRecipes = () => {
   navigate("/home#recipes");
     setTimeout(() => {

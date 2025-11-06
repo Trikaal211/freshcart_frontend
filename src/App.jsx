@@ -14,8 +14,9 @@ const App = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showMessage, setShowMessage] = useState(false);
 
-  // 🟢 Backend wake-up loader
+  //  Backend wake-up loader
   useEffect(() => {
     const wakeServer = async () => {
       try {
@@ -29,7 +30,7 @@ const App = () => {
     wakeServer();
   }, []);
 
-  // 🟠 Scroll top button visibility
+  //  Scroll top button visibility
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 200);
@@ -43,7 +44,7 @@ const App = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 🔵 Smooth anchor scroll
+  // Smooth anchor scroll
   useEffect(() => {
     if (location.hash) {
       const element = document.querySelector(location.hash);
@@ -51,13 +52,24 @@ const App = () => {
     }
   }, [location]);
 
+    useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowMessage(true);
+    }, 5000);
+
+    // cleanup (good practice)
+    return () => clearTimeout(timer);
+  }, []);
+
   //  Loading screen aesthetic
   if (loading) {
     return (
       <div className="loader-container">
         <div className="loader-circle"></div>
         <h2> Waking up backend...</h2>
-        <p>i,ll Appriciate your kindness </p>
+        <p> it Take 10 to 20 second </p>
+        {showMessage && <p>Appreciate your kindness❤️</p>}
+
       </div>
     );
   }

@@ -9,6 +9,8 @@ const ProductDetail = () => {
   const [mainImage, setMainImage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useContext(CartContext);
+    const [dots, setDots] = useState("");
+
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -23,12 +25,21 @@ const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/${
     };
     fetchProduct();
   }, [id]);
+    useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => (prev.length < 3 ? prev + "." : ""));
+    }, 500); // har 0.5 sec me ek dot add hoga
 
-  if (!product) return <div>Loading...</div>;
+    return () => clearInterval(interval);
+  }, []);
 
+  if (!product) return 
+  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+      Loading{dots}
+    </div>
   return (
     <div className="product-detail-wrapper">
-      {/* 🖼️ LEFT - Images */}
+      {/*  LEFT - Images */}
       <div className="product-images">
         <div className="thumbnails">
           {product.images?.map((img, i) => (
@@ -55,7 +66,7 @@ const res = await fetch(`https://freshcart-backend-4wrc.onrender.com/products/${
         </div>
       </div>
 
-      {/* 📄 RIGHT - Product Info */}
+      {/*RIGHT - Product Info */}
       <div className="product-info">
 <span className="category">
   {product.category?.name || product.category}

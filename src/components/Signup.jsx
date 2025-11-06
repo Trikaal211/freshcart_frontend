@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // ✅ Redirect ke liye
+import { useNavigate } from "react-router-dom"; //  Redirect ke liye
 
 import "./signup.css";
 
@@ -31,7 +31,7 @@ const Signup = () => {
       setMessage(res.data.message);
       console.log(res.data);
 
-      // ✅ Redirect after successful signup
+      //  Redirect after successful signup
       setTimeout(() => {
         navigate("/user");
       }, 1000);
