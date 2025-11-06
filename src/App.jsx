@@ -67,7 +67,10 @@ const App = () => {
       <div className="loader-container">
         <div className="loader-circle"></div>
         <h2> Waking up backend...</h2>
-        <p> it Take 10 to 20 second </p>
+        <p> it Take 10 to 20 second 
+          please signup then login to use more feature like addtocart , wishlist order, upload product etc. 
+          click on navbar user-icon to signup and login
+        </p>
         {showMessage && <p>Appreciate your kindness❤️</p>}
 
       </div>
