@@ -86,12 +86,16 @@ function ProductUpload() {
     setShowAlert(true);
     
     setTimeout(() => {
-      setShowAlert(false);
-      // If it's a success alert and we have a product ID, redirect after alert closes
-      if (type === "success" && productId) {
-        navigate(`/all-products#product-${productId}`);
-      }
-    }, duration);
+  setShowAlert(false);
+}, duration - 500); // alert close hone se thoda pehle
+
+if (type === "success" && productId) {
+  // Redirect thoda delay se taaki alert dikhe aur navigate sure chale
+  setTimeout(() => {
+    navigate(`/all-products#product-${productId}`);
+  }, duration);
+}
+
   };
 
   // Close Alert Manually
