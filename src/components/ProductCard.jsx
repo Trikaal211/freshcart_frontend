@@ -14,25 +14,25 @@ const ProductCard = ({ product }) => {
   const token = localStorage.getItem("accessToken");
 
   // Check if product is in wishlist on component mount
-useEffect(() => {
-  if (!token || !product?._id) return;
+  useEffect(() => {
+    if (!token || !product?._id) return;
 
-  const checkWishlistStatus = async () => {
-    try {
-const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/check/${product._id}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setIsInWishlist(data.isInWishlist);
+    const checkWishlistStatus = async () => {
+      try {
+        const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/check/${product._id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsInWishlist(data.isInWishlist);
+        }
+      } catch (error) {
+        console.error("Error checking wishlist:", error);
       }
-    } catch (error) {
-      console.error("Error checking wishlist:", error);
-    }
-  };
+    };
 
-  checkWishlistStatus();
-}, [product?._id, token]);
+    checkWishlistStatus();
+  }, [product?._id, token]);
 
   const handleAdd = async () => {
     if (!product?._id) {
@@ -79,7 +79,7 @@ const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishli
 
   const addToWishlist = async () => {
     try {
-const response = await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
+      const response = await fetch("https://freshcart-backend-4wrc.onrender.com/wishlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ const response = await fetch("https://freshcart-backend-4wrc.onrender.com/wishli
 
   const removeFromWishlist = async () => {
     try {
-const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/${product._id}`, {
+      const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishlist/${product._id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -129,7 +129,10 @@ const response = await fetch(`https://freshcart-backend-4wrc.onrender.com/wishli
   );
 
   return (
-    <div className="product-card">
+    <div 
+      className="product-card"
+      id={`product-${product._id}`} // ADD THIS LINE - This is the important part!
+    >
       <div className="img-wrapper">
         <Link to={`/product/${product._id}`} className="product-card-link">
           <img src={product.images[0]} alt={product.title} />
