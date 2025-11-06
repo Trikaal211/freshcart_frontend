@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "./upload.css";
+
+// Import modern alert icons
+import { FaCheck, FaExclamationTriangle, FaTimes } from "react-icons/fa";
 
 const initialForm = {
   title: "",
@@ -43,6 +47,15 @@ function ProductUpload() {
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
+  const [uploadedProductId, setUploadedProductId] = useState(null);
+  const navigate = useNavigate();
+  
+  // Modern Alert States
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState(""); // success, error
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertDuration, setAlertDuration] = useState(3000);
 
   // Fetch categories
   useEffect(() => {
@@ -50,6 +63,28 @@ function ProductUpload() {
       .then(res => setCategories(res.data))
       .catch(err => console.error(" Category fetch error:", err));
   }, []);
+
+  // Modern Alert Function
+  const showModernAlert = (type, title, message, duration = 3000) => {
+    setAlertType(type);
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertDuration(duration);
+    setShowAlert(true);
+    
+    setTimeout(() => {
+      setShowAlert(false);
+      // If it's a success alert and we have a product ID, redirect after alert closes
+      if (type === "success" && uploadedProductId) {
+        navigate(`/all-products#product-${uploadedProductId}`);
+      }
+    }, duration);
+  };
+
+  // Close Alert Manually
+  const closeAlert = () => {
+    setShowAlert(false);
+  };
 
   // Handle input
   const handleChange = (e) => {
@@ -89,7 +124,10 @@ function ProductUpload() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return alert(" Please login first");
+      if (!token) {
+        showModernAlert("error", "Login Required", "Please login to upload products", 4000);
+        return;
+      }
 
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
@@ -99,32 +137,86 @@ function ProductUpload() {
 
       files.forEach(file => formData.append("images", file));
 
-      const res =await axios.post(
-  "https://freshcart-backend-4wrc.onrender.com/products",
-  formData,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
-    },
-    withCredentials: true,
-  }
-);
+      const res = await axios.post(
+        "https://freshcart-backend-4wrc.onrender.com/products",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
 
+      // Store the uploaded product ID for redirect
+      setUploadedProductId(res.data._id);
+      
+      // Show success alert
+      showModernAlert(
+        "success", 
+        "Product Uploaded!", 
+        "Product successfully uploaded. Redirecting...",
+        2000
+      );
 
-      alert(" Product uploaded successfully!");
-      console.log("Response:", res.data);
+      // Reset form after successful upload
       setForm(initialForm);
       setFiles([]);
       setPreview([]);
+
     } catch (err) {
       console.error(" Upload error:", err);
-      alert(err.response?.data?.error || "Upload failed. Check console.");
+      showModernAlert(
+        "error", 
+        "Upload Failed", 
+        err.response?.data?.error || "Upload failed. Please try again.",
+        4000
+      );
     }
   };
 
   return (
     <div className="upload-wrapper">
+      {/* Modern Alert Component */}
+      {showAlert && (
+        <div className={`modern-alert ${alertType}-alert`}>
+          <div className="alert-content">
+            {/* Alert Icon */}
+            <div className={`alert-icon ${alertType}-icon`}>
+              {alertType === "success" && <FaCheck />}
+              {alertType === "error" && <FaExclamationTriangle />}
+            </div>
+            
+            {/* Alert Content */}
+            <div className="alert-text">
+              <div className="alert-title">{alertTitle}</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            
+            {/* Close Button */}
+            <button 
+              onClick={closeAlert}
+              className="alert-close"
+            >
+              <FaTimes size={14} />
+            </button>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="alert-progress-bar">
+            <div 
+              className={`progress-fill ${alertType}-fill`}
+              style={{ animationDuration: `${alertDuration}ms` }}
+            />
+          </div>
+
+          {/* Floating Particles */}
+          <div className="alert-particle-1" />
+          <div className="alert-particle-2" />
+        </div>
+      )}
+
       <h2> Upload New Product</h2>
 
       <form className="upload-form" onSubmit={handleSubmit}>
