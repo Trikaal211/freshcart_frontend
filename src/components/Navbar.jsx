@@ -10,7 +10,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiMiniChevronDown } from "react-icons/hi2";
 import { RiSearchLine, RiCloseLine } from "react-icons/ri";
 import { BsBrightnessHigh } from "react-icons/bs";
-import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus } from "react-icons/fa";
+import { FaRegUser, FaChevronDown, FaSignInAlt, FaUserPlus, FaExclamationCircle } from "react-icons/fa";
 import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
@@ -720,7 +720,7 @@ const Navbar = () => {
             <div className="right-div"><BsBrightnessHigh size={18}/></div>
             <div className="right-div-l"><CiLocationOn size={22}/></div>
             
-            {/* USER DROPDOWN - UPDATED */}
+            {/* USER DROPDOWN - UPDATED WITH LOGIN NOTIFICATION */}
             <div className="right-div user user-dropdown-container" ref={userDropdownRef}>
               <div 
                 className="user-icon-wrapper"
@@ -729,6 +729,14 @@ const Navbar = () => {
                 <FaRegUser size={16} className='user-icon'/>
                 <FaChevronDown size={10} className={`dropdown-arroww ${userDropdown ? 'rotate' : ''}`} />
               </div>
+              
+              {/* LOGIN NOTIFICATION - SHOWS WHEN USER IS NOT LOGGED IN */}
+              {!isLoggedIn && window.innerWidth > 348 && (
+                <div className="user-login-notification">
+                  <FaExclamationCircle className="notification-icon" />
+                  <span>Please login or signup here</span>
+                </div>
+              )}
               
               {/* USER DROPDOWN MENU - UPDATED */}
               {userDropdown && window.innerWidth > 348 && (
@@ -850,10 +858,17 @@ const Navbar = () => {
             </div>
 
             {/* CART ICON */}
-            <div onClick={()=>setOpenCart(true)} className="right-div cart-icon">
+            <div onClick={()=>{
+              if (!isLoggedIn) {
+                alert("Please login to view your cart!");
+                navigate("/user");
+                return;
+              }
+              setOpenCart(true);
+            }} className="right-div cart-icon">
               <CiShoppingCart size={24}/>
-              {cartItems.length > 0 && (
-                <span className="cart-badge">{getCartItemsCount()}</span>
+              {cartItems.length > 0 && isLoggedIn && (
+                <span className="cart-badge updated-badge">{getCartItemsCount()}</span>
               )}
             </div>
           </div>
