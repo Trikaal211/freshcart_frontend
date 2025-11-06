@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import "./upload.css";
 
 // Import modern alert icons
@@ -48,7 +48,7 @@ function ProductUpload() {
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(false); // ✅ Removed uploadedProductId
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   
   // Modern Alert States
   const [showAlert, setShowAlert] = useState(false);
@@ -90,10 +90,9 @@ function ProductUpload() {
 }, duration - 500); // alert close hone se thoda pehle
 
 if (type === "success" && productId) {
-  // Redirect thoda delay se taaki alert dikhe aur navigate sure chale
   setTimeout(() => {
-    navigate(`/all-products#product-${productId}`);
-  }, duration);
+    window.location.href = `/all-products#product-${productId}`;
+  }, duration + 200);
 }
 
   };
