@@ -10,7 +10,7 @@ const Categories = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const navigate = useNavigate();
 
-  // ✅ Fetch Categories
+  //  Fetch Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -42,12 +42,12 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products/po
     fetchPopular();
   }, []);
 
-  // ✅ View All click handler
+  //  View All click handler
   const handleViewAll = () => {
     navigate("/all-products");
   };
 
-  // ✅ Category click handler
+  //  Category click handler
   const handleCategoryClick = (categoryName) => {
     navigate(`/all-products?category=${encodeURIComponent(categoryName)}`);
   };
@@ -56,7 +56,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products/po
     <section className="wrapper">
       <div className="cover">
 
-        {/* ✅ Categories Section */}
+        {/*  Categories Section */}
         <div className="category-listo">
           <h3 className="h2">Categories</h3>
           {loadingCategories ? (
@@ -83,7 +83,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/products/po
           )}
         </div>
 
-        {/* ✅ Popular Products Section */}
+        {/*  Popular Products Section */}
         <div className="product-section">
           <div className="popular-product">
             <h2>Popular Products</h2>
