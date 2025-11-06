@@ -1,25 +1,44 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaCheck, FaTimes } from "react-icons/fa";
 import { TfiFacebook } from "react-icons/tfi";
 import { FaApple } from "react-icons/fa";
 
 import "./user.css";
 import Icon from "../components/Icon";
-import CartContext from "../components/CartContext.jsx"; // Import CartContext
+import CartContext from "../components/CartContext.jsx";
 
 const User = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
   const navigate = useNavigate();
-  const { setToken } = useContext(CartContext); // Access CartProvider token setter
+  const { setToken } = useContext(CartContext);
+
+  const showAlert = (message, type = "success") => {
+    setAlertMessage(message);
+    if (type === "success") {
+      setShowSuccessAlert(true);
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+        navigate("/");
+      }, 2000);
+    } else {
+      setShowErrorAlert(true);
+      setTimeout(() => {
+        setShowErrorAlert(false);
+      }, 3000);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signin", {
+      const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -28,22 +47,61 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signi
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Login failed");
+        showAlert(data.message || "Login failed", "error");
         return;
       }
 
       localStorage.setItem("accessToken", data.accessToken);
-      setToken(data.accessToken); //  Update token in CartProvider
+      setToken(data.accessToken);
 
-      alert("Login successful!");
-      navigate("/");
+      showAlert("Login successful! Redirecting...", "success");
     } catch (err) {
       console.error("Login error:", err);
+      showAlert("Network error. Please try again.", "error");
     }
   };
 
   return (
     <div className="signup">
+      {/* Modern Success Alert */}
+      {showSuccessAlert && (
+        <div className="modern-alert success-alert">
+          <div className="alert-content">
+            <div className="alert-icon success-icon">
+              <FaCheck />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Success!</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <div className="alert-progress-bar">
+              <div className="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modern Error Alert */}
+      {showErrorAlert && (
+        <div className="modern-alert error-alert">
+          <div className="alert-content">
+            <div className="alert-icon error-icon">
+              <FaTimes />
+            </div>
+            <div className="alert-text">
+              <div className="alert-title">Oops!</div>
+              <div className="alert-message">{alertMessage}</div>
+            </div>
+            <button 
+              className="alert-close"
+              onClick={() => setShowErrorAlert(false)}
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="left-detail">
         <div className="top-left">
           <div className="top-left-icon">
@@ -86,7 +144,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signi
           </div>
           <button type="submit" className="sign-in">Sign In</button>
         </form>
-          <button className="sign-up" onClick={()=>navigate("/sign-up")}>sign-up</button>
+        <button className="sign-up" onClick={()=>navigate("/sign-up")}>sign-up</button>
 
         <div className="break">
           <hr />
@@ -97,8 +155,7 @@ const res = await fetch("https://freshcart-backend-4wrc.onrender.com/users/signi
         <div className="social-icon-user">
           <Icon icon={<FaGoogle />} text="Google" />
           <Icon icon={<TfiFacebook />} text="Facebook" />
-            <Icon icon={<FaApple />} text="Apple" />
-         
+          <Icon icon={<FaApple />} text="Apple" />
         </div>
 
         <div className="footer-user">
