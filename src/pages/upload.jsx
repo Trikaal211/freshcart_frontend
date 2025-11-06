@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./upload.css";
 
 // Import modern alert icons
@@ -47,8 +47,8 @@ function ProductUpload() {
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // ✅ Removed uploadedProductId
-  // const navigate = useNavigate();
+  const [uploadedProductId, setUploadedProductId] = useState(null);
+  const navigate = useNavigate();
   
   // Modern Alert States
   const [showAlert, setShowAlert] = useState(false);
@@ -64,21 +64,8 @@ function ProductUpload() {
       .catch(err => console.error(" Category fetch error:", err));
   }, []);
 
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (form.title) {
-      const generatedSlug = form.title
-        .toLowerCase()
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-      
-      setForm(prev => ({ ...prev, slug: generatedSlug }));
-    }
-  }, [form.title]);
-
-  // Modern Alert Function - UPDATED
-  const showModernAlert = (type, title, message, duration = 3000, productId = null) => {
+  // Modern Alert Function
+  const showModernAlert = (type, title, message, duration = 3000) => {
     setAlertType(type);
     setAlertTitle(title);
     setAlertMessage(message);
@@ -86,15 +73,12 @@ function ProductUpload() {
     setShowAlert(true);
     
     setTimeout(() => {
-  setShowAlert(false);
-}, duration - 500); // alert close hone se thoda pehle
-
-if (type === "success" && productId) {
-  setTimeout(() => {
-    window.location.href = `/all-products#product-${productId}`;
-  }, duration + 200);
-}
-
+      setShowAlert(false);
+      // If it's a success alert and we have a product ID, redirect after alert closes
+      if (type === "success" && uploadedProductId) {
+        navigate(`/all-products`);
+      }
+    }, duration);
   };
 
   // Close Alert Manually
@@ -130,34 +114,18 @@ if (type === "success" && productId) {
   // Handle images
   const handleImageChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    
-    // Maximum 5 images
-    if (selectedFiles.length > 5) {
-      showModernAlert("error", "Too Many Images", "You can upload maximum 5 images", 4000);
-      return;
-    }
-    
     setFiles(selectedFiles);
     setPreview(selectedFiles.map(f => URL.createObjectURL(f)));
   };
 
-  // Submit product - FIXED VERSION
+  // Submit product
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         showModernAlert("error", "Login Required", "Please login to upload products", 4000);
-        setIsLoading(false);
-        return;
-      }
-
-      // Price validation
-      if (form.discountPrice && parseFloat(form.discountPrice) >= parseFloat(form.price)) {
-        showModernAlert("error", "Invalid Price", "Discount price should be less than regular price", 4000);
-        setIsLoading(false);
         return;
       }
 
@@ -181,15 +149,15 @@ if (type === "success" && productId) {
         }
       );
 
-      const newProductId = res.data._id;
+      // Store the uploaded product ID for redirect
+      setUploadedProductId(res.data._id);
       
-      // Show success alert with product ID as parameter
+      // Show success alert
       showModernAlert(
         "success", 
         "Product Uploaded!", 
         "Product successfully uploaded. Redirecting...",
-        2000,
-        newProductId  // Pass product ID directly
+        2000
       );
 
       // Reset form after successful upload
@@ -205,17 +173,8 @@ if (type === "success" && productId) {
         err.response?.data?.error || "Upload failed. Please try again.",
         4000
       );
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  // Cleanup preview URLs
-  useEffect(() => {
-    return () => {
-      preview.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [preview]);
 
   return (
     <div className="upload-wrapper">
@@ -295,16 +254,14 @@ if (type === "success" && productId) {
           ))}
         </div>
 
-        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+        <input type="file" multiple onChange={handleImageChange} />
         <div className="preview">
           {preview.map((src, i) => (
             <img key={i} src={src} alt="preview" />
           ))}
         </div>
 
-        <button type="submit" className="upload-btn" disabled={isLoading}>
-          {isLoading ? "Uploading..." : "Upload Product"}
-        </button>
+        <button type="submit" className="upload-btn">Upload Product</button>
       </form>
     </div>
   );
