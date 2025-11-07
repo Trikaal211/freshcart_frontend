@@ -251,9 +251,6 @@ const Navbar = () => {
       setLoadingUser(false);
     }
   };
-   useEffect(() => {
-    fetchUserData();
-  }, []);
 
   // MODIFIED: handleDelete with modern alert
   async function handleDelete(cartItemId) {
@@ -547,15 +544,12 @@ const Navbar = () => {
 
         {/* LEFT */}
         <div className='lefti'>
-          <div className='image-covery'>
-            <img className='heyy' src={user.profileImage} alt="" />
-          </div>
           <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
             <span></span><span></span><span></span>
           </button>
           <div className="nav-brand"><Link className="cart" to="/">Cartzilla</Link></div>
           
-          {/* CATEGORIES DROPDOWN */}  
+          {/* CATEGORIES DROPDOWN */}
           <div className="categories-container">
             <button 
               className="category-btn" 
