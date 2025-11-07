@@ -218,10 +218,10 @@ const Profile = () => {
       </div>
 
       {/* Profile Info */}
-      {activeTab === "profile" && (
-       <section className="user-info">
-  <div className="profile-card">
-    <div className="profile-image">
+      {activeTab === "profilee" && (
+       <section className="userr-info">
+  <div className="profilee-card">
+    <div className="profilee-image">
       <img className="hey" src={user.profileImage} alt={user.firstName} />
     </div>
 
@@ -270,19 +270,19 @@ const Profile = () => {
       {activeTab === "products" && (
         <section className="my-products">
           <div className="section-header">
-            <h3> My Uploaded Products ({myProducts.length})</h3>
+            <h3> My Uploaded Products ({myProducts.length})</h3>                           
             <div>
               <button onClick={debugOrders} className="debug-btn" title="Check console for orders data">
                 Debug
               </button>
-              <button onClick={refreshMyProducts} className="refresh-btn">
+              <button onClick={refreshMyProducts} className="refresh-btn">   
                  Refresh
               </button>
             </div>
           </div>
 
           <div className="product-grid">
-            {myProducts.length === 0 ? (
+            {myProducts.length === 0 ? (    
               <p>No products uploaded.</p>
             ) : (
               myProducts.map((p) => (
