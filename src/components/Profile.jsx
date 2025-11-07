@@ -121,38 +121,24 @@ const Profile = () => {
   };
 
   //  FIXED: Mark order as shipped - CORRECTED VERSION
-// Alternative: Direct product order update + main order update
-const markAsShipped = async (order) => {
-  try {
-    console.log("Marking order as shipped:", order);
-    
-    if (!order.productId) {
-      alert("Error: Product ID not found for this order");
-      return;
-    }
-
-    const orderSubId = order._id; // Product's order subdocument ID
-    if (!orderSubId) {
-      alert("Error: Order ID not found");
-      return;
-    }
-
-    // 1. First update the product's order status
-    await axios.patch(
-      `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${orderSubId}/status`,
-      { status: "shipped" },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+  const markAsShipped = async (order) => {
+    try {
+      console.log("Marking order as shipped:", order);
+      
+      if (!order.productId) {
+        alert("Error: Product ID not found for this order");
+        return;
       }
-    );
 
-    // 2. Also update the main order if we have main order ID
-    if (order.orderId) {
-      await axios.patch(
-        `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${order.orderId}`,
+      // Use the subdocument _id (order._id) for product order update
+      const orderId = order._id;
+      if (!orderId) {
+        alert("Error: Order ID not found");
+        return;
+      }
+
+      const response = await axios.patch(
+        `https://freshcart-backend-4wrc.onrender.com/products/${order.productId}/orders/${orderId}/status`,
         { status: "shipped" },
         {
           headers: {
@@ -160,31 +146,25 @@ const markAsShipped = async (order) => {
             "Content-Type": "application/json",
           },
         }
+        
       );
-    }
+      console.log("Order update response:", response.data);
 
-    // Update UI
-    setReceivedOrders((prev) =>
-      prev.map((o) => 
-        o._id === orderSubId ? { ...o, status: "shipped" } : o
-      )
-    );
-
-    if (order.orderId) {
-      setMyOrders(prev => 
-        prev.map(o => 
-          o._id === order.orderId ? { ...o, status: "shipped" } : o
+      // Update UI instantly
+      setReceivedOrders((prev) =>
+        prev.map((o) => 
+          o._id === orderId ? { ...o, status: "shipped" } : o
         )
       );
+
+      alert("Order marked as shipped successfully");
+
+    } catch (err) {
+      console.error("Error updating order:", err);
+      console.error("Error details:", err.response?.data);
+      alert("Failed to update order status: " + (err.response?.data?.error || err.message));
     }
-
-    alert("Order marked as shipped successfully");
-
-  } catch (err) {
-    console.error("Error updating order:", err);
-    alert("Failed to update order status: " + (err.response?.data?.error || err.message));
-  }
-};
+  };
 
   // Debug function to check orders data
   const debugOrders = () => {
