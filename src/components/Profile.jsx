@@ -218,7 +218,7 @@ const Profile = () => {
       </div>
 
       {/* Profile Info */}
-      {activeTab === "profilee" && (
+      {activeTab === "profile" && (
        <section className="userr-info">
   <div className="profilee-card">
     <div className="profilee-image">
