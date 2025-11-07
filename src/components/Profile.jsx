@@ -221,6 +221,7 @@ const Profile = () => {
       {activeTab === "profile" && (
         <section className="user-info">
           <h3>Personal Details</h3>
+          <p><img src={user.profileImage} alt="" /></p>
           <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
           <p><strong>Email:</strong> {user.email}</p>
           <p><strong>Role:</strong> {user.role}</p>
