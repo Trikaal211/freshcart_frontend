@@ -544,6 +544,9 @@ const Navbar = () => {
 
         {/* LEFT */}
         <div className='lefti'>
+          <div className='image-covery'>
+            <img className='heyy' src={user.profileImage} alt="" />
+          </div>
           <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
             <span></span><span></span><span></span>
           </button>
