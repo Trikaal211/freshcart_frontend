@@ -146,8 +146,13 @@ const Profile = () => {
             "Content-Type": "application/json",
           },
         }
+        
       );
-
+    await axios.patch(  
+      `https://freshcart-backend-4wrc.onrender.com/orders/update-status/${orderId}`,{
+        status:"shipped"
+      }
+    )
       console.log("Order update response:", response.data);
 
       // Update UI instantly
@@ -157,7 +162,7 @@ const Profile = () => {
         )
       );
 
-      alert("Order marked as shipped successfully!");
+      alert("Order marked as shipped successfully");
 
     } catch (err) {
       console.error("Error updating order:", err);
