@@ -219,13 +219,19 @@ const Profile = () => {
 
       {/* Profile Info */}
       {activeTab === "profile" && (
-        <section className="user-info">
-          <h3>Personal Details</h3>
-          <p><img className="hey" src={user.profileImage} alt="" /></p>
-          <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Role:</strong> {user.role}</p>
-        </section>
+       <section className="user-info">
+  <div className="profile-card">
+    <div className="profile-image">
+      <img className="hey" src={user.profileImage} alt={user.firstName} />
+    </div>
+
+    <div className="profile-details">
+      <h3>{user.firstName} {user.lastName}</h3>
+      <p className="email">{user.email}</p>
+      <p className="role">{user.role === "admin" ? "Administrator" : "User"}</p>
+    </div>
+  </div>
+</section>
       )}
 
       {/* My Cart */}
