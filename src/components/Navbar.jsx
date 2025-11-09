@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
-import { io } from 'socket.io-client';
 import './navbar.css';
 import DeliverySidebar from "./DeliverySidebar";
 
@@ -16,7 +15,6 @@ import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
   // ---------------- STATES ----------------
-  const [socket, setSocket] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setOpenCart] = useState(false);
   const [cartItems, setCartItems] = useState([]);
@@ -182,9 +180,6 @@ const Navbar = () => {
     localStorage.removeItem("accessToken");
     setUserDropdown(false);
     setUser(null);
-    if (socket) {
-      socket.disconnect();
-    }
     navigate("/user");
     window.location.reload();
   };
@@ -257,7 +252,7 @@ const Navbar = () => {
     }
   };
 
-  // SOCKET-ENABLED CART FUNCTIONS
+  // CART FUNCTIONS
   async function handleDelete(cartItemId) {
     const token = localStorage.getItem("accessToken");
     if (!token) { 
@@ -271,12 +266,8 @@ const Navbar = () => {
       });
       if (!res.ok) throw new Error("Failed to delete on server");
       
-      // Socket event trigger karein
-      if (socket) {
-        const userId = jwtDecode(token)._id;
-        socket.emit("cartChange", { userId, action: "delete" });
-      }
-      
+      // Refresh cart after delete
+      fetchCart();
       showModernAlert('delete');
     } catch (err) { 
       console.error("Error removing cart item:", err); 
@@ -297,17 +288,38 @@ const Navbar = () => {
       });
       if (!res.ok) throw new Error("Failed to update quantity");
       
-      // Socket event trigger karein
-      if (socket) {
-        const userId = jwtDecode(token)._id;
-        socket.emit("cartChange", { userId, action: "update" });
-      }
-      
+      // Refresh cart after quantity change
+      fetchCart();
       showModernAlert('quantity');
     } catch (err) { 
       console.error("Error updating quantity:", err); 
     }
   }
+
+  // Fetch cart function
+  const fetchCart = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setCartItems([]);
+      return;
+    }
+    
+    setLoadingCart(true);
+    try {
+      const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Failed to fetch cart");
+      const data = await res.json();
+      setCartItems(data.products || []);
+    } catch (err) { 
+      console.error("Error fetching cart:", err); 
+      setCartItems([]);
+    } finally { 
+      setLoadingCart(false); 
+    }
+  };
 
   // Calculate total cart items count
   const getCartItemsCount = () => {
@@ -345,66 +357,9 @@ const Navbar = () => {
 
   // ---------------- EFFECTS ----------------
   
-  // Socket connection setup
-  useEffect(() => {
-    const newSocket = io("https://freshcart-backend-4wrc.onrender.com");
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
-
-  // Real-time cart updates
-  useEffect(() => {
-    if (!socket) return;
-
-    const token = localStorage.getItem("accessToken");
-    if (token && isTokenValid(token)) {
-      const userId = jwtDecode(token)._id;
-      
-      // User join karein room mein
-      socket.emit("joinUserRoom", userId);
-      
-      // Cart updates listen karein
-      socket.on("cartUpdated", (updatedCart) => {
-        console.log("🟢 Real-time cart update received:", updatedCart);
-        setCartItems(updatedCart.products || []);
-      });
-    }
-
-    return () => {
-      socket.off("cartUpdated");
-    };
-  }, [socket]);
-
   // Initial cart fetch
   useEffect(() => {
-    const fetchCartOnMount = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        setCartItems([]);
-        return;
-      }
-      
-      setLoadingCart(true);
-      try {
-        const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          credentials: "include"
-        });
-        if (!res.ok) throw new Error("Failed to fetch cart");
-        const data = await res.json();
-        setCartItems(data.products || []);
-      } catch (err) { 
-        console.error("Error fetching cart:", err); 
-        setCartItems([]);
-      } finally { 
-        setLoadingCart(false); 
-      }
-    };
-    
-    fetchCartOnMount();
+    fetchCart();
   }, []);
 
   // Fetch user data
@@ -458,22 +413,6 @@ const Navbar = () => {
   // Cart sidebar refresh
   useEffect(() => {
     if (cart) {
-      const token = localStorage.getItem("accessToken");
-      const fetchCart = async () => {
-        if (!token) return;
-        
-        setLoadingCart(true);
-        try {
-          const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            credentials: "include"
-          });
-          if (!res.ok) throw new Error("Failed to fetch cart");
-          const data = await res.json();
-          setCartItems(data.products || []);
-        } catch (err) { console.error("Error fetching cart:", err); }
-        finally { setLoadingCart(false); }
-      };
       fetchCart();
     }
   }, [cart]);
