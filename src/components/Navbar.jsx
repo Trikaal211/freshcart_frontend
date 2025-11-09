@@ -1057,41 +1057,42 @@ const Navbar = () => {
               </div>
             )}
             
-            {cartItems.length > 0 && (
-              <button className="checkout-btn" onClick={() => {
-                // Get selected address based on active tab
-                let selectedAddress;
-                if (activeTab === "delivery") {
-                  selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
-                } else {
-                  selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
-                }
-                
-                setOpenCart(false);
-                
-                // Filter out invalid items before checkout
-                const validCartItems = cartItems.filter(item => {
-                  const product = item.productId || item.product;
-                  return !!product;
-                });
+           {cartItems.length > 0 && (
+  <button
+    className="checkout-btn"
+    onClick={() => {
+      // Get selected address based on active tab
+      let selectedAddress;
+      if (activeTab === "delivery") {
+        selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
+      } else {
+        selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
+      }
 
-                console.log("Navigating to checkout with:", {
-                  selectedAddress,
-                  type: activeTab,
-                  cartItems: validCartItems
-                });
+      // Filter out invalid cart items before checkout
+      const validCartItems = cartItems.filter(item => item.productId || item.product);
 
-                navigate("/checkout", { 
-                  state: { 
-                    selectedAddress: selectedAddress, 
-                    type: activeTab,
-                    cartItems: validCartItems.length > 0 ? validCartItems : cartItems
-                  } 
-                });
-              }}>
-                Go to Checkout
-              </button>
-            )}
+      if (validCartItems.length === 0) {
+        showModernAlert('cartAccess'); // Or show a different alert
+        return;
+      }
+
+      // Navigate to checkout page with cart items and selected address
+      navigate("/checkout", {
+        state: {
+          cartItems: validCartItems,
+          selectedAddress
+        }
+      });
+
+      // Close cart sidebar
+      setOpenCart(false);
+    }}
+  >
+    Proceed to Checkout
+  </button>
+)}
+
           </div>
         </div>
 
