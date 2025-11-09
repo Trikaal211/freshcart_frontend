@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import './navbar.css';
 import DeliverySidebar from "./DeliverySidebar";
 
@@ -15,6 +16,7 @@ import { CiLocationOn, CiShoppingCart } from "react-icons/ci";
 
 const Navbar = () => {
   // ---------------- STATES ----------------
+  const [socket, setSocket] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setOpenCart] = useState(false);
   const [cartItems, setCartItems] = useState([]);
@@ -180,6 +182,9 @@ const Navbar = () => {
     localStorage.removeItem("accessToken");
     setUserDropdown(false);
     setUser(null);
+    if (socket) {
+      socket.disconnect();
+    }
     navigate("/user");
     window.location.reload();
   };
@@ -196,7 +201,7 @@ const Navbar = () => {
     }
   }
 
-  // MODERN ALERT FUNCTIONS - FIXED
+  // MODERN ALERT FUNCTIONS
   const showModernAlert = (type) => {
     switch(type) {
       case 'login':
@@ -252,7 +257,7 @@ const Navbar = () => {
     }
   };
 
-  // MODIFIED: handleDelete with modern alert
+  // SOCKET-ENABLED CART FUNCTIONS
   async function handleDelete(cartItemId) {
     const token = localStorage.getItem("accessToken");
     if (!token) { 
@@ -265,12 +270,19 @@ const Navbar = () => {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to delete on server");
-      setCartItems(prev => prev.filter(item => item._id !== cartItemId));
+      
+      // Socket event trigger karein
+      if (socket) {
+        const userId = jwtDecode(token)._id;
+        socket.emit("cartChange", { userId, action: "delete" });
+      }
+      
       showModernAlert('delete');
-    } catch (err) { console.error("Error removing cart item:", err); }
+    } catch (err) { 
+      console.error("Error removing cart item:", err); 
+    }
   }
 
-  // MODIFIED: handleQuantityChange with modern alert
   async function handleQuantityChange(cartItemId, newQuantity) {
     const token = localStorage.getItem("accessToken");
     if (!token) { 
@@ -284,16 +296,22 @@ const Navbar = () => {
         body: JSON.stringify({ quantity: newQuantity })
       });
       if (!res.ok) throw new Error("Failed to update quantity");
-      const updatedCart = await res.json();
-      setCartItems(updatedCart.products || []);
+      
+      // Socket event trigger karein
+      if (socket) {
+        const userId = jwtDecode(token)._id;
+        socket.emit("cartChange", { userId, action: "update" });
+      }
+      
       showModernAlert('quantity');
-    } catch (err) { console.error("Error updating quantity:", err); }
+    } catch (err) { 
+      console.error("Error updating quantity:", err); 
+    }
   }
 
-  // Calculate total cart items count - IMPROVED
+  // Calculate total cart items count
   const getCartItemsCount = () => {
     return cartItems.reduce((total, item) => {
-      // Only count items that have valid product data
       const product = item.productId || item.product;
       if (product) {
         return total + item.quantity;
@@ -302,7 +320,7 @@ const Navbar = () => {
     }, 0);
   };
 
-  // Handle user icon click - UPDATED
+  // Handle user icon click
   const handleUserIconClick = () => {
     const isSmallScreen = window.innerWidth <= 348;
     
@@ -320,18 +338,54 @@ const Navbar = () => {
         }
         setUserDropdown(!userDropdown);
       } else { 
-        // For non-logged in users, just toggle the dropdown
         setUserDropdown(!userDropdown);
       }
     }
   };
 
   // ---------------- EFFECTS ----------------
+  
+  // Socket connection setup
   useEffect(() => {
-    // Fetch cart items on component mount
+    const newSocket = io("https://freshcart-backend-4wrc.onrender.com");
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  // Real-time cart updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (token && isTokenValid(token)) {
+      const userId = jwtDecode(token)._id;
+      
+      // User join karein room mein
+      socket.emit("joinUserRoom", userId);
+      
+      // Cart updates listen karein
+      socket.on("cartUpdated", (updatedCart) => {
+        console.log("🟢 Real-time cart update received:", updatedCart);
+        setCartItems(updatedCart.products || []);
+      });
+    }
+
+    return () => {
+      socket.off("cartUpdated");
+    };
+  }, [socket]);
+
+  // Initial cart fetch
+  useEffect(() => {
     const fetchCartOnMount = async () => {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
+      if (!token) {
+        setCartItems([]);
+        return;
+      }
       
       setLoadingCart(true);
       try {
@@ -342,14 +396,18 @@ const Navbar = () => {
         if (!res.ok) throw new Error("Failed to fetch cart");
         const data = await res.json();
         setCartItems(data.products || []);
-      } catch (err) { console.error("Error fetching cart:", err); }
-      finally { setLoadingCart(false); }
+      } catch (err) { 
+        console.error("Error fetching cart:", err); 
+        setCartItems([]);
+      } finally { 
+        setLoadingCart(false); 
+      }
     };
     
     fetchCartOnMount();
   }, []);
 
-  // Fetch user data when component mounts
+  // Fetch user data
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token && isTokenValid(token)) {
@@ -357,6 +415,7 @@ const Navbar = () => {
     }
   }, []);
 
+  // Body overflow control
   useEffect(() => {
     if (menuOpen || cart || userDropdown || openAddress || categoriesOpen || mobileSearchOpen) {
       document.body.style.overflow = "hidden";
@@ -365,31 +424,28 @@ const Navbar = () => {
     }
   }, [menuOpen, cart, userDropdown, openAddress, categoriesOpen, mobileSearchOpen]);
 
+  // Scroll effect
   useEffect(() => {
     const handleScroll = () => setIsFixed(window.scrollY > 100);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Click outside handler for ALL dropdowns
+  // Click outside handlers
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // User dropdown
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
         setUserDropdown(false);
       }
       
-      // Categories dropdown
       if (categoriesOpen && !event.target.closest('.categories-container')) {
         setCategoriesOpen(false);
       }
       
-      // Search dropdown (desktop)
       if (searchDropdownOpen && searchBoxRef.current && !searchBoxRef.current.contains(event.target)) {
         setSearchDropdownOpen(false);
       }
       
-      // Mobile search sidebar
       if (mobileSearchOpen && mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
         setMobileSearchOpen(false);
       }
@@ -399,10 +455,13 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userDropdown, categoriesOpen, searchDropdownOpen, mobileSearchOpen]);
 
+  // Cart sidebar refresh
   useEffect(() => {
     if (cart) {
       const token = localStorage.getItem("accessToken");
       const fetchCart = async () => {
+        if (!token) return;
+        
         setLoadingCart(true);
         try {
           const res = await fetch("https://freshcart-backend-4wrc.onrender.com/cart", {
@@ -419,7 +478,7 @@ const Navbar = () => {
     }
   }, [cart]);
 
-  // Desktop search effect
+  // Desktop search
   useEffect(() => {
     if (!searchTerm) { 
       setSearchResults([]); 
@@ -442,7 +501,7 @@ const Navbar = () => {
     return () => clearTimeout(debounce);
   }, [searchTerm]);
 
-  // Mobile search effect
+  // Mobile search
   useEffect(() => {
     if (!mobileSearchTerm) { 
       setSearchResults([]); 
@@ -468,7 +527,6 @@ const Navbar = () => {
     <div className={`main ${isFixed ? "fixed" : ""}`}>
       
       {/* MODERN ALERTS */}
-      {/* Login Required Alert */}
       {showLoginAlert && (
         <div className="modern-alert warning-alert">
           <div className="alert-content">
@@ -486,7 +544,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Cart Access Alert */}
       {showCartAccessAlert && (
         <div className="modern-alert info-alert">
           <div className="alert-content">
@@ -504,7 +561,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Delete Alert */}
       {showDeleteAlert && (
         <div className="modern-alert error-alert">
           <div className="alert-content">
@@ -522,7 +578,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Quantity Update Alert */}
       {showQuantityAlert && (
         <div className="modern-alert success-alert">
           <div className="alert-content">
@@ -542,7 +597,7 @@ const Navbar = () => {
 
       <div className="navbar-cover">
 
-        {/* LEFT */}
+        {/* LEFT SIDE */}
         <div className='lefti'>
           <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
             <span></span><span></span><span></span>
@@ -807,7 +862,7 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT SIDE */}
         <div className='right-side'>
           <div className="delivery-navbar" onClick={() => setOpenAddress(true)}>
             <div className="st">Delivery</div>
@@ -842,7 +897,7 @@ const Navbar = () => {
             <div className="right-div"><BsBrightnessHigh size={18}/></div>
             <div className="right-div-l"><CiLocationOn size={22}/></div>
             
-            {/* USER DROPDOWN - UPDATED WITH LOGIN NOTIFICATION */}
+            {/* USER DROPDOWN */}
             <div className="right-div user user-dropdown-container" ref={userDropdownRef}>
               <div 
                 className="user-icon-wrapper"
@@ -852,7 +907,7 @@ const Navbar = () => {
                 <FaChevronDown size={10} className={`dropdown-arroww ${userDropdown ? 'rotate' : ''}`} />
               </div>
               
-              {/* LOGIN NOTIFICATION - SHOWS WHEN USER IS NOT LOGGED IN */}
+              {/* LOGIN NOTIFICATION */}
               {!isLoggedIn && window.innerWidth > 348 && (
                 <div className="user-login-notification">
                   <FaExclamationCircle className="notification-icon" />
@@ -860,7 +915,7 @@ const Navbar = () => {
                 </div>
               )}
               
-              {/* USER DROPDOWN MENU - UPDATED */}
+              {/* USER DROPDOWN MENU */}
               {userDropdown && window.innerWidth > 348 && (
                 <div className={`user-dropdown-menu ${isLoggedIn ? 'logged-in' : 'logged-out'}`}>
                   
@@ -979,7 +1034,7 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* CART ICON - UPDATED WITH MODERN ALERT */}
+            {/* CART ICON */}
             <div onClick={()=>{
               if (!isLoggedIn) {
                 showModernAlert('cartAccess');
@@ -1008,10 +1063,8 @@ const Navbar = () => {
             ) : (
               <div className="cart-items">
                 {cartItems.map(item => {
-                  // CORRECTED: Handle different product structures
                   const product = item.productId || item.product;
                   
-                  // If product data is missing, show fallback UI
                   if (!product) {
                     return (
                       <div key={item._id} className="cart-item">
@@ -1057,42 +1110,37 @@ const Navbar = () => {
               </div>
             )}
             
-           {cartItems.length > 0 && (
-  <button
-    className="checkout-btn"
-    onClick={() => {
-      // Get selected address based on active tab
-      let selectedAddress;
-      if (activeTab === "delivery") {
-        selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
-      } else {
-        selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
-      }
+            {cartItems.length > 0 && (
+              <button
+                className="checkout-btn"
+                onClick={() => {
+                  let selectedAddress;
+                  if (activeTab === "delivery") {
+                    selectedAddress = deliveryAddresses.find(a => a.id === selectedDelivery);
+                  } else {
+                    selectedAddress = pickupAddresses.find(a => a.id === selectedPickup);
+                  }
 
-      // Filter out invalid cart items before checkout
-      const validCartItems = cartItems.filter(item => item.productId || item.product);
+                  const validCartItems = cartItems.filter(item => item.productId || item.product);
 
-      if (validCartItems.length === 0) {
-        showModernAlert('cartAccess'); // Or show a different alert
-        return;
-      }
+                  if (validCartItems.length === 0) {
+                    showModernAlert('cartAccess');
+                    return;
+                  }
 
-      // Navigate to checkout page with cart items and selected address
-      navigate("/checkout", {
-        state: {
-          cartItems: validCartItems,
-          selectedAddress
-        }
-      });
+                  navigate("/checkout", {
+                    state: {
+                      cartItems: validCartItems,
+                      selectedAddress
+                    }
+                  });
 
-      // Close cart sidebar
-      setOpenCart(false);
-    }}
-  >
-    Proceed to Checkout
-  </button>
-)}
-
+                  setOpenCart(false);
+                }}
+              >
+                Proceed to Checkout
+              </button>
+            )}
           </div>
         </div>
 
